@@ -1,146 +1,153 @@
 // screens/TruthTableScreen.js
 
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
-import { Text, DataTable, ActivityIndicator, useTheme, Snackbar } from 'react-native-paper';
+import React, { useState } from 'react';
+import { StyleSheet, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { TextInput, Button, Title, Paragraph, Snackbar, useTheme } from 'react-native-paper';
 import * as Animatable from 'react-native-animatable';
-import { createTruthTable } from '../utils/truthTableGenerator';
 
-const TruthTableScreen = ({ route }) => {
-  const { formula } = route.params;
-  const [truthTable, setTruthTable] = useState([]);
-  const [loading, setLoading] = useState(true);
+const TruthTableScreen = ({ navigation }) => {
+  const [formula, setFormula] = useState('');
   const [visible, setVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
   const { colors } = useTheme();
 
-  useEffect(() => {
-    try {
-      const table = createTruthTable(formula);
-      setTruthTable(table);
-    } catch (err) {
-      setSnackbarMessage(err.message);
+  // Validation function
+  const isValidFormula = (formula) => {
+    // Allowed characters: uppercase letters, spaces, parentheses, logical operators (&, |, ~, ->, <->)
+    const regex = /^[A-Z\s\(\)&|~\-<>]*$/;
+    return regex.test(formula);
+  };
+
+  const handleGenerate = () => {
+    if (!formula.trim()) {
+      setSnackbarMessage('Please enter a propositional logic formula.');
       setVisible(true);
-    } finally {
-      setLoading(false);
+      return;
     }
-  }, [formula]);
-
-  if (loading) {
-    return (
-      <View style={styles.loader}>
-        <ActivityIndicator animating={true} color={colors.primary} size="large" />
-        <Text style={styles.loaderText}>Generating truth table...</Text>
-      </View>
-    );
-  }
-
-  if (truthTable.length === 0) {
-    return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>No data available.</Text>
-      </View>
-    );
-  }
-
-  const headers = Object.keys(truthTable[0]);
+    if (!isValidFormula(formula)) {
+      setSnackbarMessage('Invalid formula syntax. Use only uppercase letters and allowed operators.');
+      setVisible(true);
+      return;
+    }
+    // Navigate to TruthTableResultScreen with the formula as a parameter
+    navigation.navigate('TruthTableResult', { formula });
+  };
 
   return (
-    <View style={styles.container}>
-      <ScrollView horizontal>
-        <Animatable.View animation="fadeIn" duration={1000} style={styles.tableContainer}>
-          <DataTable>
-            <DataTable.Header style={{ backgroundColor: colors.primary }}>
-              {headers.map((header) => (
-                <DataTable.Title key={header} style={styles.headerCell}>
-                  <Text style={[styles.headerText, { color: colors.surface }]}>
-                    {header}
-                  </Text>
-                </DataTable.Title>
-              ))}
-            </DataTable.Header>
-
-            {truthTable.map((row, index) => (
-              <Animatable.View 
-                key={index} 
-                animation="fadeInUp" 
-                delay={index * 100} 
-                duration={500}
-              >
-                <DataTable.Row>
-                  {headers.map((header) => (
-                    <DataTable.Cell key={header} style={styles.cell}>
-                      <Text>{row[header].toString()}</Text>
-                    </DataTable.Cell>
-                  ))}
-                </DataTable.Row>
-              </Animatable.View>
-            ))}
-          </DataTable>
-        </Animatable.View>
-      </ScrollView>
-
-      <Snackbar
-        visible={visible}
-        onDismiss={() => setVisible(false)}
-        duration={3000}
-        action={{
-          label: 'Dismiss',
-          onPress: () => {
-            setVisible(false);
-          },
-        }}
-        style={styles.snackbar}
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <KeyboardAvoidingView 
+        style={styles.container} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {snackbarMessage}
-      </Snackbar>
-    </View>
+        <Animatable.View animation="fadeInUp" duration={1000} style={styles.header}>
+          <Title style={styles.title}>Generate Truth Table</Title>
+          <Paragraph style={styles.subtitle}>
+            Enter a propositional logic formula to generate its truth table.
+          </Paragraph>
+        </Animatable.View>
+
+        <Animatable.View animation="fadeInUp" duration={1200} delay={200} style={styles.inputContainer}>
+          <TextInput
+            label="Logic Formula"
+            placeholder="e.g., A AND (B OR C)"
+            value={formula}
+            onChangeText={setFormula}
+            mode="outlined"
+            style={styles.input}
+            autoCapitalize="characters"
+            left={<TextInput.Icon name="math-compass" />}
+          />
+          <Button 
+            mode="contained" 
+            onPress={handleGenerate} 
+            style={styles.button}
+            icon="table"
+            contentStyle={styles.buttonContent}
+            labelStyle={styles.buttonLabel}
+            animated
+            uppercase={false}
+          >
+            Generate Truth Table
+          </Button>
+        </Animatable.View>
+
+        <Animatable.View animation="fadeInUp" duration={1400} delay={400} style={styles.footer}>
+          <Button 
+            mode="text" 
+            onPress={() => navigation.navigate('Instructions')}
+            style={styles.instructionsButton}
+            icon="information"
+            uppercase={false}
+          >
+            How It Works
+          </Button>
+        </Animatable.View>
+
+        <Snackbar
+          visible={visible}
+          onDismiss={() => setVisible(false)}
+          duration={3000}
+          action={{
+            label: 'Dismiss',
+            onPress: () => {
+              setVisible(false);
+            },
+          }}
+          style={styles.snackbar}
+        >
+          {snackbarMessage}
+        </Snackbar>
+      </KeyboardAvoidingView>
+    </TouchableWithoutFeedback>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 10,
-    backgroundColor: '#fff',
+    padding: 20,
+    backgroundColor: 'transparent',
+    justifyContent: 'space-between',
   },
-  loader: {
+  header: {
+    marginTop: 40,
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 28,
+    textAlign: 'center',
+    marginBottom: 10,
+    color: '#333',
+  },
+  subtitle: {
+    textAlign: 'center',
+    color: '#666',
+  },
+  inputContainer: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
   },
-  loaderText: {
-    marginTop: 10,
-    color: '#666',
+  input: {
+    backgroundColor: '#fff',
+  },
+  button: {
+    marginTop: 20,
+    padding: 5,
+    borderRadius: 8,
+  },
+  buttonContent: {
+    height: 50,
+  },
+  buttonLabel: {
     fontSize: 16,
   },
-  errorContainer: {
-    flex:1,
-    justifyContent: 'center',
+  footer: {
     alignItems: 'center',
-    padding:20,
+    marginBottom: 30,
   },
-  errorText: {
-    color: '#B00020',
-    fontSize: 18,
-  },
-  tableContainer: {
-    paddingVertical: 10,
-  },
-  headerCell: {
-    minWidth: 80,
-    justifyContent: 'center',
-    paddingVertical: 8,
-  },
-  headerText: {
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  cell: {
-    minWidth: 80,
-    justifyContent: 'center',
-    paddingVertical: 8,
+  instructionsButton: {
+    alignSelf: 'center',
   },
   snackbar: {
     backgroundColor: '#B00020',

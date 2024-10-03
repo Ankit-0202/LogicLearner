@@ -14,7 +14,7 @@ const InstructionsScreen = ({ navigation }) => {
         <Title style={styles.title}>How It Works</Title>
       </Animatable.View>
 
-      <Animatable.View animation="fadeIn" duration={1200} delay={200} style={styles.content}>
+      <Animatable.View animation="fadeInUp" duration={1200} delay={200} style={styles.content}>
         <Paragraph style={styles.paragraph}>
           Welcome to the Propositional Logic Learner! This app helps you understand and visualize propositional logic formulas by generating their corresponding truth tables.
         </Paragraph>
@@ -76,24 +76,8 @@ const InstructionsScreen = ({ navigation }) => {
         <Divider style={styles.divider} />
 
         <Paragraph style={styles.paragraph}>
-          Enter your formula in the input field on the Home Screen and tap "Generate Truth Table" to visualize the logical relationships.
+          Enter your formula in the input field on the Truth Table Generation screen and tap "Generate Truth Table" to visualize the logical relationships.
         </Paragraph>
-
-        {/* Add a button to navigate to Equivalence Rules */}
-        <View style={styles.equivalenceButtonContainer}>
-          <Button
-            mode="contained"
-            onPress={() => navigation.navigate('EquivalenceRules')}
-            icon="table-search"
-            style={styles.equivalenceButton}
-            contentStyle={styles.equivalenceButtonContent}
-            labelStyle={styles.equivalenceButtonLabel}
-            animated
-            uppercase={false}
-          >
-            View Equivalence Rules
-          </Button>
-        </View>
       </Animatable.View>
     </ScrollView>
   );

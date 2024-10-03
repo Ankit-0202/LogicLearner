@@ -5,24 +5,24 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 
 import { ThemeProvider } from './contexts/ThemeContext'; // Ensure ThemeProvider is correctly imported
-import { useContext } from 'react';
 
 import HomeScreen from './screens/HomeScreen';
 import TruthTableScreen from './screens/TruthTableScreen';
-import InstructionsScreen from './screens/InstructionsScreen';
-import EquivalenceRulesScreen from './screens/EquivalenceRulesScreen'; // Import the new screen
+import TruthTableResultScreen from './screens/TruthTableResultScreen'; // New screen
+import EquivalenceScreen from './screens/EquivalenceScreen'; // New screen
+import EquivalenceRulesScreen from './screens/EquivalenceRulesScreen'; // Existing screen
+import InstructionsScreen from './screens/InstructionsScreen'; // Existing screen
 
 const Stack = createStackNavigator();
 
 const AppContent = () => {
-  // If you have global theme settings or need to access theme context here, you can do so
   return (
     <NavigationContainer>
       <Stack.Navigator 
         initialRouteName="Home"
         screenOptions={{
           headerStyle: {
-            backgroundColor: '#6200ee', // This can be dynamic based on theme if needed
+            backgroundColor: '#6200ee', // Adjust based on MD3DarkTheme if necessary
           },
           headerTintColor: '#fff',
           headerTitleStyle: {
@@ -38,17 +38,27 @@ const AppContent = () => {
         <Stack.Screen 
           name="TruthTable" 
           component={TruthTableScreen} 
+          options={{ title: 'Truth Table Generation' }} 
+        />
+        <Stack.Screen 
+          name="TruthTableResult" 
+          component={TruthTableResultScreen} 
           options={{ title: 'Truth Table' }} 
+        />
+        <Stack.Screen 
+          name="Equivalence" 
+          component={EquivalenceScreen} 
+          options={{ title: 'Check Equivalence' }} 
+        />
+        <Stack.Screen 
+          name="EquivalenceRules" 
+          component={EquivalenceRulesScreen} 
+          options={{ title: 'Equivalence Rules' }} 
         />
         <Stack.Screen 
           name="Instructions" 
           component={InstructionsScreen} 
           options={{ title: 'How It Works' }} 
-        />
-        <Stack.Screen 
-          name="EquivalenceRules" 
-          component={EquivalenceRulesScreen} 
-          options={{ title: 'Equivalence Rules' }} // Set a meaningful title
         />
       </Stack.Navigator>
     </NavigationContainer>
