@@ -1,11 +1,11 @@
 // screens/InstructionsScreen.js
 
 import React from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
-import { Title, Paragraph, List, Divider, useTheme } from 'react-native-paper';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { Title, Paragraph, List, Divider, Button, useTheme } from 'react-native-paper';
 import * as Animatable from 'react-native-animatable';
 
-const InstructionsScreen = () => {
+const InstructionsScreen = ({ navigation }) => {
   const { colors } = useTheme();
 
   return (
@@ -32,11 +32,11 @@ const InstructionsScreen = () => {
           <List.Item
             title="Operators"
             description={`Use the following operators for logical operations:
-  - AND: AND or &
-  - OR: OR or |
-  - NOT: NOT or ~
-  - IMPLIES: IMPLIES or ->
-  - IFF (If and Only If): IFF or <->`}
+- AND: AND or &
+- OR: OR or |
+- NOT: NOT or ~
+- IMPLIES: IMPLIES or ->
+- IFF (If and Only If): IFF or <->`}
             left={props => <List.Icon {...props} icon="function-variant" />}
           />
           <List.Item
@@ -78,6 +78,22 @@ const InstructionsScreen = () => {
         <Paragraph style={styles.paragraph}>
           Enter your formula in the input field on the Home Screen and tap "Generate Truth Table" to visualize the logical relationships.
         </Paragraph>
+
+        {/* Add a button to navigate to Equivalence Rules */}
+        <View style={styles.equivalenceButtonContainer}>
+          <Button
+            mode="contained"
+            onPress={() => navigation.navigate('EquivalenceRules')}
+            icon="table-search"
+            style={styles.equivalenceButton}
+            contentStyle={styles.equivalenceButtonContent}
+            labelStyle={styles.equivalenceButtonLabel}
+            animated
+            uppercase={false}
+          >
+            View Equivalence Rules
+          </Button>
+        </View>
       </Animatable.View>
     </ScrollView>
   );
@@ -112,6 +128,20 @@ const styles = StyleSheet.create({
   },
   divider: {
     marginVertical: 20,
+  },
+  equivalenceButtonContainer: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  equivalenceButton: {
+    borderRadius: 8,
+    width: '80%',
+  },
+  equivalenceButtonContent: {
+    height: 50,
+  },
+  equivalenceButtonLabel: {
+    fontSize: 16,
   },
 });
 

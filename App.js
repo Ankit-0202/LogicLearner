@@ -4,25 +4,25 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 
-import { ThemeProvider, ThemeContext } from './contexts/ThemeContext';
+import { ThemeProvider } from './contexts/ThemeContext'; // Ensure ThemeProvider is correctly imported
 import { useContext } from 'react';
 
 import HomeScreen from './screens/HomeScreen';
 import TruthTableScreen from './screens/TruthTableScreen';
 import InstructionsScreen from './screens/InstructionsScreen';
+import EquivalenceRulesScreen from './screens/EquivalenceRulesScreen'; // Import the new screen
 
 const Stack = createStackNavigator();
 
 const AppContent = () => {
-  const { isDarkTheme } = useContext(ThemeContext);
-
+  // If you have global theme settings or need to access theme context here, you can do so
   return (
     <NavigationContainer>
       <Stack.Navigator 
         initialRouteName="Home"
         screenOptions={{
           headerStyle: {
-            backgroundColor: isDarkTheme ? '#bb86fc' : '#6200ee',
+            backgroundColor: '#6200ee', // This can be dynamic based on theme if needed
           },
           headerTintColor: '#fff',
           headerTitleStyle: {
@@ -44,6 +44,11 @@ const AppContent = () => {
           name="Instructions" 
           component={InstructionsScreen} 
           options={{ title: 'How It Works' }} 
+        />
+        <Stack.Screen 
+          name="EquivalenceRules" 
+          component={EquivalenceRulesScreen} 
+          options={{ title: 'Equivalence Rules' }} // Set a meaningful title
         />
       </Stack.Navigator>
     </NavigationContainer>
