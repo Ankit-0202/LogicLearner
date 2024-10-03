@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, DataTable, ActivityIndicator, useTheme, Snackbar } from 'react-native-paper';
+import * as Animatable from 'react-native-animatable';
 import { createTruthTable } from '../utils/truthTableGenerator';
 
 const TruthTableScreen = ({ route }) => {
@@ -30,7 +31,7 @@ const TruthTableScreen = ({ route }) => {
     return (
       <View style={styles.loader}>
         <ActivityIndicator animating={true} color={colors.primary} size="large" />
-        <Text>Generating truth table...</Text>
+        <Text style={styles.loaderText}>Generating truth table...</Text>
       </View>
     );
   }
@@ -48,7 +49,7 @@ const TruthTableScreen = ({ route }) => {
   return (
     <View style={styles.container}>
       <ScrollView horizontal>
-        <View>
+        <Animatable.View animation="fadeIn" duration={1000} style={styles.tableContainer}>
           <DataTable>
             <DataTable.Header style={{ backgroundColor: colors.primary }}>
               {headers.map((header) => (
@@ -61,16 +62,23 @@ const TruthTableScreen = ({ route }) => {
             </DataTable.Header>
 
             {truthTable.map((row, index) => (
-              <DataTable.Row key={index}>
-                {headers.map((header) => (
-                  <DataTable.Cell key={header} style={styles.cell}>
-                    <Text>{row[header].toString()}</Text>
-                  </DataTable.Cell>
-                ))}
-              </DataTable.Row>
+              <Animatable.View 
+                key={index} 
+                animation="fadeInUp" 
+                delay={index * 100} 
+                duration={500}
+              >
+                <DataTable.Row>
+                  {headers.map((header) => (
+                    <DataTable.Cell key={header} style={styles.cell}>
+                      <Text>{row[header].toString()}</Text>
+                    </DataTable.Cell>
+                  ))}
+                </DataTable.Row>
+              </Animatable.View>
             ))}
           </DataTable>
-        </View>
+        </Animatable.View>
       </ScrollView>
 
       <Snackbar
@@ -102,6 +110,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  loaderText: {
+    marginTop: 10,
+    color: '#666',
+    fontSize: 16,
+  },
   errorContainer: {
     flex:1,
     justifyContent: 'center',
@@ -111,6 +124,9 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#B00020',
     fontSize: 18,
+  },
+  tableContainer: {
+    paddingVertical: 10,
   },
   headerCell: {
     minWidth: 80,

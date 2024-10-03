@@ -7,7 +7,7 @@ const theme = {
   colors: {
     ...DefaultTheme.colors,
     primary: '#6200ee', // Deep Purple
-    accent: '#03dac4',  // Teal
+    accent: '#03ffc9',  // Teal
     background: '#f6f6f6',
     surface: '#ffffff',
     text: '#000000',

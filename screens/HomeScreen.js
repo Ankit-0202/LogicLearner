@@ -1,16 +1,18 @@
 // screens/HomeScreen.js
 
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { StyleSheet, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
-import { Text, TextInput, Button, Title, Paragraph, Snackbar, IconButton } from 'react-native-paper';
-import { useTheme } from '@react-navigation/native';
+import { TextInput, Button, Title, Paragraph, Snackbar, Switch, IconButton, useTheme } from 'react-native-paper';
+import * as Animatable from 'react-native-animatable';
+import { ThemeContext } from '../contexts/ThemeContext';
 
 const HomeScreen = ({ navigation }) => {
   const [formula, setFormula] = useState('');
   const [visible, setVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
-  const theme = useTheme();
+  const { toggleTheme, isDarkTheme } = useContext(ThemeContext);
+  const { colors } = useTheme();
 
   // Validation function
   const isValidFormula = (formula) => {
@@ -39,38 +41,54 @@ const HomeScreen = ({ navigation }) => {
         style={styles.container} 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <Title style={styles.title}>Propositional Logic Learner</Title>
-        <Paragraph style={styles.subtitle}>
-          Enter a propositional logic formula to generate its truth table.
-        </Paragraph>
+        <Animatable.View animation="fadeInUp" duration={1000} style={styles.header}>
+          <Title style={styles.title}>Propositional Logic Learner</Title>
+          <Paragraph style={styles.subtitle}>
+            Enter a propositional logic formula to generate its truth table.
+          </Paragraph>
+        </Animatable.View>
 
-        <TextInput
-          label="Logic Formula"
-          placeholder="e.g., A AND (B OR C)"
-          value={formula}
-          onChangeText={setFormula}
-          mode="outlined"
-          style={styles.input}
-          autoCapitalize="characters"
-          left={<TextInput.Icon name="math-compass" />}
-        />
-        <Button 
-          mode="contained" 
-          onPress={handleGenerate} 
-          style={styles.button}
-          icon="table"
-        >
-          Generate Truth Table
-        </Button>
+        <Animatable.View animation="fadeInUp" duration={1200} delay={200} style={styles.inputContainer}>
+          <TextInput
+            label="Logic Formula"
+            placeholder="e.g., A AND (B OR C)"
+            value={formula}
+            onChangeText={setFormula}
+            mode="outlined"
+            style={styles.input}
+            autoCapitalize="characters"
+            left={<TextInput.Icon name="math-compass" />}
+          />
+          <Button 
+            mode="contained" 
+            onPress={handleGenerate} 
+            style={styles.button}
+            icon="table"
+            contentStyle={styles.buttonContent}
+            labelStyle={styles.buttonLabel}
+            animated
+            uppercase={false}
+          >
+            Generate Truth Table
+          </Button>
+        </Animatable.View>
 
-        <Button 
-          mode="text" 
-          onPress={() => navigation.navigate('Instructions')}
-          style={styles.instructionsButton}
-          icon="information"
-        >
-          How It Works
-        </Button>
+        <Animatable.View animation="fadeInUp" duration={1400} delay={400} style={styles.footer}>
+          <Button 
+            mode="text" 
+            onPress={() => navigation.navigate('Instructions')}
+            style={styles.instructionsButton}
+            icon="information"
+            uppercase={false}
+          >
+            How It Works
+          </Button>
+
+          <Animatable.View style={styles.themeToggle}>
+            <Paragraph style={{ color: colors.text }}>Dark Theme</Paragraph>
+            <Switch value={isDarkTheme} onValueChange={toggleTheme} />
+          </Animatable.View>
+        </Animatable.View>
 
         <Snackbar
           visible={visible}
@@ -95,8 +113,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#f2f2f2',
-    justifyContent: 'center',
+    backgroundColor: 'transparent',
+    justifyContent: 'space-between',
+  },
+  header: {
+    marginTop: 40,
+    alignItems: 'center',
   },
   title: {
     fontSize: 28,
@@ -107,21 +129,42 @@ const styles = StyleSheet.create({
   subtitle: {
     textAlign: 'center',
     color: '#666',
-    marginBottom: 20,
+  },
+  inputContainer: {
+    flex: 1,
+    justifyContent: 'center',
   },
   input: {
     backgroundColor: '#fff',
-    marginBottom: 20,
   },
   button: {
+    marginTop: 20,
     padding: 5,
-    marginBottom: 10,
+    borderRadius: 8,
+  },
+  buttonContent: {
+    height: 50,
+  },
+  buttonLabel: {
+    fontSize: 16,
+  },
+  footer: {
+    alignItems: 'center',
+    marginBottom: 30,
   },
   instructionsButton: {
     alignSelf: 'center',
+    marginBottom: 10,
   },
   snackbar: {
     backgroundColor: '#B00020',
+  },
+  themeToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '60%',
+    marginTop: 10,
   },
 });
 
