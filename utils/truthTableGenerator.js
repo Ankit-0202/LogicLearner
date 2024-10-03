@@ -2,9 +2,7 @@ import { create, all } from 'mathjs';
 
 // Configure math.js with logical operators
 const config = {
-  operators: {
-    // Override default logical operators if necessary
-  },
+  // Custom configurations if needed
 };
 
 const math = create(all, config);
@@ -16,11 +14,24 @@ math.import({
   NOT: (a) => !a,
   IMPLIES: (a, b) => !a || b,
   IFF: (a, b) => a === b,
+  '∧': (a, b) => a && b,
+  '∨': (a, b) => a || b,
+  '¬': (a) => !a,
+  '→': (a, b) => !a || b,
+  '↔': (a, b) => a === b,
 }, { override: true });
 
 export const createTruthTable = (formula) => {
+  // Replace logical symbols with word equivalents to match math.js functions
+  let processedFormula = formula
+    .replace(/∧/g, ' AND ')
+    .replace(/∨/g, ' OR ')
+    .replace(/¬/g, ' NOT ')
+    .replace(/→/g, ' IMPLIES ')
+    .replace(/↔/g, ' IFF ');
+
   // Extract unique variables from the formula
-  const variables = Array.from(new Set(formula.match(/[A-Za-z]/g))).sort();
+  const variables = Array.from(new Set(processedFormula.match(/[A-Za-z]/g))).sort();
 
   if (variables.length === 0) {
     throw new Error('No variables found in the formula.');
@@ -39,9 +50,11 @@ export const createTruthTable = (formula) => {
     });
 
     // Replace variables in the formula with their truth values
-    let expr = formula;
+    let expr = processedFormula;
     variables.forEach((variable) => {
-      expr = expr.replace(new RegExp(variable, 'g'), row[variable] ? 'true' : 'false');
+      const value = row[variable] ? 'true' : 'false';
+      // Use word boundaries to replace only whole words
+      expr = expr.replace(new RegExp(`\\b${variable}\\b`, 'g'), value);
     });
 
     // Evaluate the expression
