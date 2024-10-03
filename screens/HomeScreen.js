@@ -1,127 +1,126 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
-import { Text, TextInput, Button, Modal, Portal, Provider, IconButton, Card, Paragraph } from 'react-native-paper';
-import { useNavigation } from '@react-navigation/native';
+// screens/HomeScreen.js
 
-const HomeScreen = () => {
+import React, { useState } from 'react';
+import { View, StyleSheet, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { Text, TextInput, Button, Title, Paragraph, Snackbar } from 'react-native-paper';
+
+const HomeScreen = ({ navigation }) => {
   const [formula, setFormula] = useState('');
   const [visible, setVisible] = useState(false);
-  const navigation = useNavigation();
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
-  const showModal = () => setVisible(true);
-  const hideModal = () => setVisible(false);
+  // Validation function
+  const isValidFormula = (formula) => {
+    // Allowed characters: uppercase letters, spaces, parentheses, logical operators (&, |, ~, ->, <->)
+    const regex = /^[A-Z\s\(\)&|~\-<>]*$/;
+    return regex.test(formula);
+  };
 
   const handleGenerate = () => {
     if (!formula.trim()) {
-      alert('Please enter a propositional logic formula.');
+      setSnackbarMessage('Please enter a propositional logic formula.');
+      setVisible(true);
+      return;
+    }
+    if (!isValidFormula(formula)) {
+      setSnackbarMessage('Invalid formula syntax. Use only uppercase letters and allowed operators.');
+      setVisible(true);
       return;
     }
     navigation.navigate('TruthTable', { formula });
   };
 
   return (
-    <Provider>
-      <KeyboardAvoidingView
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <KeyboardAvoidingView 
+        style={styles.container} 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.container}
       >
-        <ScrollView contentContainerStyle={styles.content}>
-          {/* Welcome Card */}
-          <Card style={styles.card}>
-            <Card.Title title="Welcome to Logic Learner" />
-            <Card.Content>
-              <Paragraph>
-                Logic Learner helps you understand propositional logic by generating truth tables for your formulas.
-              </Paragraph>
-            </Card.Content>
-          </Card>
+        <View style={styles.header}>
+          <Title style={styles.title}>Propositional Logic Learner</Title>
+          <Paragraph style={styles.subtitle}>
+            Enter a propositional logic formula to generate its truth table.
+          </Paragraph>
+        </View>
 
-          {/* Input Card */}
-          <Card style={styles.card}>
-            <Card.Title
-              title="Enter Your Formula"
-              right={(props) => (
-                <IconButton {...props} icon="help-circle" onPress={showModal} />
-              )}
-            />
-            <Card.Content>
-              <TextInput
-                label="Propositional Logic Formula"
-                placeholder="e.g., A AND (B OR NOT C)"
-                value={formula}
-                onChangeText={setFormula}
-                mode="outlined"
-                style={styles.input}
-              />
-              <Button mode="contained" onPress={handleGenerate} style={styles.button}>
-                Generate Truth Table
-              </Button>
-            </Card.Content>
-          </Card>
+        <View style={styles.inputContainer}>
+          <TextInput
+            label="Logic Formula"
+            placeholder="e.g., A AND (B OR C)"
+            value={formula}
+            onChangeText={setFormula}
+            mode="outlined"
+            style={styles.input}
+            autoCapitalize="characters"
+          />
+          <Button mode="contained" onPress={handleGenerate} style={styles.button}>
+            Generate Truth Table
+          </Button>
+        </View>
 
-          {/* Instructions Modal */}
-          <Portal>
-            <Modal visible={visible} onDismiss={hideModal} contentContainerStyle={styles.modal}>
-              <Text style={styles.modalTitle}>Input Syntax Rules</Text>
-              <Text style={styles.modalText}>
-                - **Variables:** Use single letters (A, B, C, etc.).
-              </Text>
-              <Text style={styles.modalText}>
-                - **Operators:**
-                {'\n'}  - **AND:** `AND`, `∧`
-                {'\n'}  - **OR:** `OR`, `∨`
-                {'\n'}  - **NOT:** `NOT`, `¬`
-                {'\n'}  - **IMPLIES:** `IMPLIES`, `→`
-                {'\n'}  - **IFF:** `IFF`, `↔`
-              </Text>
-              <Text style={styles.modalText}>
-                - **Parentheses:** Use parentheses to define the order of operations.
-                {'\n'}- **Example:** `A AND (B OR NOT C)` or `A ∧ (B ∨ ¬C)`
-              </Text>
-              <Button onPress={hideModal} mode="contained" style={styles.button}>
-                Close
-              </Button>
-            </Modal>
-          </Portal>
-        </ScrollView>
+        <View style={styles.footer}>
+          <Button 
+            icon="information" 
+            mode="text" 
+            onPress={() => navigation.navigate('Instructions')}
+          >
+            How It Works
+          </Button>
+        </View>
+
+        <Snackbar
+          visible={visible}
+          onDismiss={() => setVisible(false)}
+          duration={3000}
+          action={{
+            label: 'Dismiss',
+            onPress: () => {
+              setVisible(false);
+            },
+          }}
+          style={{ backgroundColor: 'red' }}
+        >
+          {snackbarMessage}
+        </Snackbar>
       </KeyboardAvoidingView>
-    </Provider>
+    </TouchableWithoutFeedback>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  content: {
     padding: 20,
+    backgroundColor: '#f2f2f2',
+    justifyContent: 'space-between',
+  },
+  header: {
+    marginTop: 40,
+  },
+  title: {
+    fontSize: 28,
+    textAlign: 'center',
+    marginBottom: 10,
+    color: '#333',
+  },
+  subtitle: {
+    textAlign: 'center',
+    color: '#666',
+  },
+  inputContainer: {
+    flex: 1,
     justifyContent: 'center',
   },
-  card: {
-    marginBottom: 20,
-    elevation: 4,
-  },
   input: {
-    marginBottom: 10,
     backgroundColor: '#fff',
   },
   button: {
-    marginTop: 10,
+    marginTop: 20,
+    padding: 5,
   },
-  modal: {
-    backgroundColor: 'white',
-    padding: 20,
-    margin: 20,
-    borderRadius: 8,
-  },
-  modalTitle: {
-    fontSize: 20,
-    marginBottom: 10,
-    fontWeight: 'bold',
-  },
-  modalText: {
-    marginBottom: 10,
-    fontSize: 16,
+  footer: {
+    alignItems: 'center',
+    marginBottom: 30,
   },
 });
 

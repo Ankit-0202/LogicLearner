@@ -1,32 +1,21 @@
+// screens/TruthTableScreen.js
+
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { Text, ActivityIndicator, Card } from 'react-native-paper';
+import { Text, DataTable, ActivityIndicator, useTheme } from 'react-native-paper';
 import { createTruthTable } from '../utils/truthTableGenerator';
-import { Table, Row, Rows } from 'react-native-table-component';
 
 const TruthTableScreen = ({ route }) => {
   const { formula } = route.params;
   const [truthTable, setTruthTable] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [tableHead, setTableHead] = useState([]);
-  const [tableData, setTableData] = useState([]);
+
+  const { colors } = useTheme(); // Access theme colors
 
   useEffect(() => {
     try {
       const table = createTruthTable(formula);
-      if (table.length === 0) {
-        throw new Error('Empty truth table.');
-      }
-
-      // Extract headers
-      const headers = Object.keys(table[0]);
-      setTableHead(headers);
-
-      // Extract rows
-      const rows = table.map(row => headers.map(header => row[header] === true ? 'True' : row[header] === false ? 'False' : row[header].toString()));
-      setTableData(rows);
-
       setTruthTable(table);
     } catch (err) {
       setError(err.message);
@@ -38,7 +27,7 @@ const TruthTableScreen = ({ route }) => {
   if (loading) {
     return (
       <View style={styles.loader}>
-        <ActivityIndicator animating={true} size="large" />
+        <ActivityIndicator animating={true} color={colors.primary} size="large" />
         <Text>Generating truth table...</Text>
       </View>
     );
@@ -52,18 +41,40 @@ const TruthTableScreen = ({ route }) => {
     );
   }
 
+  if (truthTable.length === 0) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>No data available.</Text>
+      </View>
+    );
+  }
+
+  const headers = Object.keys(truthTable[0]);
+
   return (
     <ScrollView horizontal style={styles.container}>
-      <View style={styles.tableContainer}>
-        <Card style={styles.card}>
-          <Card.Title title={`Truth Table for: ${formula}`} />
-          <Card.Content>
-            <Table borderStyle={styles.tableBorder}>
-              <Row data={tableHead} style={styles.head} textStyle={styles.textHead} />
-              <Rows data={tableData} textStyle={styles.text} />
-            </Table>
-          </Card.Content>
-        </Card>
+      <View>
+        <DataTable>
+          <DataTable.Header style={{ backgroundColor: colors.primary }}>
+            {headers.map((header) => (
+              <DataTable.Title key={header} style={styles.headerCell}>
+                <Text style={[styles.headerText, { color: colors.surface }]}>
+                  {header}
+                </Text>
+              </DataTable.Title>
+            ))}
+          </DataTable.Header>
+
+          {truthTable.map((row, index) => (
+            <DataTable.Row key={index}>
+              {headers.map((header) => (
+                <DataTable.Cell key={header} style={styles.cell}>
+                  <Text>{row[header].toString()}</Text>
+                </DataTable.Cell>
+              ))}
+            </DataTable.Row>
+          ))}
+        </DataTable>
       </View>
     </ScrollView>
   );
@@ -72,32 +83,7 @@ const TruthTableScreen = ({ route }) => {
 const styles = StyleSheet.create({
   container: {
     padding: 10,
-    backgroundColor: '#f2f2f2',
-  },
-  tableContainer: {
-    flex: 1,
-    padding: 10,
-  },
-  card: {
-    padding: 10,
-    elevation: 4,
-  },
-  head: {
-    height: 40,
-    backgroundColor: '#6200ee',
-  },
-  textHead: {
-    margin: 6,
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  text: {
-    margin: 6,
-    textAlign: 'center',
-  },
-  tableBorder: {
-    borderWidth: 1,
-    borderColor: '#ddd',
+    backgroundColor: '#fff',
   },
   loader: {
     flex: 1,
@@ -106,13 +92,24 @@ const styles = StyleSheet.create({
   },
   errorContainer: {
     flex:1,
-    justifyContent:'center',
-    alignItems:'center',
+    justifyContent: 'center',
+    alignItems: 'center',
     padding:20,
   },
   errorText: {
     color: 'red',
     fontSize: 18,
+  },
+  headerCell: {
+    minWidth: 50,
+    justifyContent: 'center',
+  },
+  headerText: {
+    fontWeight: 'bold',
+  },
+  cell: {
+    minWidth: 50,
+    justifyContent: 'center',
   },
 });
 

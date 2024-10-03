@@ -1,37 +1,54 @@
+// utils/truthTableGenerator.js
+
 import { create, all } from 'mathjs';
 
-// Configure math.js with logical operators
+// Configure math.js with custom logical operators
 const config = {
-  // Custom configurations if needed
+  // No specific configurations needed for now
 };
 
 const math = create(all, config);
 
-// Define logical operators if not already defined
+// Define custom logical functions
 math.import({
   AND: (a, b) => a && b,
   OR: (a, b) => a || b,
   NOT: (a) => !a,
   IMPLIES: (a, b) => !a || b,
   IFF: (a, b) => a === b,
-  '∧': (a, b) => a && b,
-  '∨': (a, b) => a || b,
-  '¬': (a) => !a,
-  '→': (a, b) => !a || b,
-  '↔': (a, b) => a === b,
+  // Symbol-based operators
+  '&': (a, b) => a && b,
+  '|': (a, b) => a || b,
+  '~': (a) => !a,
+  '->': (a, b) => !a || b,
+  '<->': (a, b) => a === b,
 }, { override: true });
 
-export const createTruthTable = (formula) => {
-  // Replace logical symbols with word equivalents to match math.js functions
-  let processedFormula = formula
-    .replace(/∧/g, ' AND ')
-    .replace(/∨/g, ' OR ')
-    .replace(/¬/g, ' NOT ')
-    .replace(/→/g, ' IMPLIES ')
-    .replace(/↔/g, ' IFF ');
+// Function to sanitize and prepare the expression
+const prepareExpression = (formula, row) => {
+  let expr = formula;
 
-  // Extract unique variables from the formula
-  const variables = Array.from(new Set(processedFormula.match(/[A-Za-z]/g))).sort();
+  // Replace variables with their truth values
+  Object.keys(row).forEach(variable => {
+    if (variable !== 'Result') { // Avoid replacing 'Result' if it's a variable
+      const regex = new RegExp(`\\b${variable}\\b`, 'g');
+      expr = expr.replace(regex, row[variable] ? 'true' : 'false');
+    }
+  });
+
+  // Replace textual operators with symbolic equivalents
+  expr = expr.replace(/AND|and/gi, '&')
+             .replace(/OR|or/gi, '|')
+             .replace(/NOT|not/gi, '~')
+             .replace(/IMPLIES|implies/gi, '->')
+             .replace(/IFF|iff/gi, '<->');
+
+  return expr;
+};
+
+export const createTruthTable = (formula) => {
+  // Extract unique variables from the formula (single uppercase letters)
+  const variables = Array.from(new Set(formula.match(/[A-Z]/g))).sort();
 
   if (variables.length === 0) {
     throw new Error('No variables found in the formula.');
@@ -49,20 +66,15 @@ export const createTruthTable = (formula) => {
       row[variable] = binary[index] === '1';
     });
 
-    // Replace variables in the formula with their truth values
-    let expr = processedFormula;
-    variables.forEach((variable) => {
-      const value = row[variable] ? 'true' : 'false';
-      // Use word boundaries to replace only whole words
-      expr = expr.replace(new RegExp(`\\b${variable}\\b`, 'g'), value);
-    });
+    // Prepare the expression by replacing variables and operators
+    const expr = prepareExpression(formula, row);
 
     // Evaluate the expression
     try {
       const result = math.evaluate(expr);
-      row.Result = result;
+      row['Result'] = result;
     } catch (error) {
-      row.Result = 'Error';
+      row['Result'] = 'Error';
     }
 
     table.push(row);
