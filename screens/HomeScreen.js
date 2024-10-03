@@ -1,13 +1,16 @@
 // screens/HomeScreen.js
 
 import React, { useState } from 'react';
-import { View, StyleSheet, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
-import { Text, TextInput, Button, Title, Paragraph, Snackbar } from 'react-native-paper';
+import { StyleSheet, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { Text, TextInput, Button, Title, Paragraph, Snackbar, IconButton } from 'react-native-paper';
+import { useTheme } from '@react-navigation/native';
 
 const HomeScreen = ({ navigation }) => {
   const [formula, setFormula] = useState('');
   const [visible, setVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+
+  const theme = useTheme();
 
   // Validation function
   const isValidFormula = (formula) => {
@@ -36,37 +39,38 @@ const HomeScreen = ({ navigation }) => {
         style={styles.container} 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <View style={styles.header}>
-          <Title style={styles.title}>Propositional Logic Learner</Title>
-          <Paragraph style={styles.subtitle}>
-            Enter a propositional logic formula to generate its truth table.
-          </Paragraph>
-        </View>
+        <Title style={styles.title}>Propositional Logic Learner</Title>
+        <Paragraph style={styles.subtitle}>
+          Enter a propositional logic formula to generate its truth table.
+        </Paragraph>
 
-        <View style={styles.inputContainer}>
-          <TextInput
-            label="Logic Formula"
-            placeholder="e.g., A AND (B OR C)"
-            value={formula}
-            onChangeText={setFormula}
-            mode="outlined"
-            style={styles.input}
-            autoCapitalize="characters"
-          />
-          <Button mode="contained" onPress={handleGenerate} style={styles.button}>
-            Generate Truth Table
-          </Button>
-        </View>
+        <TextInput
+          label="Logic Formula"
+          placeholder="e.g., A AND (B OR C)"
+          value={formula}
+          onChangeText={setFormula}
+          mode="outlined"
+          style={styles.input}
+          autoCapitalize="characters"
+          left={<TextInput.Icon name="math-compass" />}
+        />
+        <Button 
+          mode="contained" 
+          onPress={handleGenerate} 
+          style={styles.button}
+          icon="table"
+        >
+          Generate Truth Table
+        </Button>
 
-        <View style={styles.footer}>
-          <Button 
-            icon="information" 
-            mode="text" 
-            onPress={() => navigation.navigate('Instructions')}
-          >
-            How It Works
-          </Button>
-        </View>
+        <Button 
+          mode="text" 
+          onPress={() => navigation.navigate('Instructions')}
+          style={styles.instructionsButton}
+          icon="information"
+        >
+          How It Works
+        </Button>
 
         <Snackbar
           visible={visible}
@@ -78,7 +82,7 @@ const HomeScreen = ({ navigation }) => {
               setVisible(false);
             },
           }}
-          style={{ backgroundColor: 'red' }}
+          style={styles.snackbar}
         >
           {snackbarMessage}
         </Snackbar>
@@ -92,10 +96,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: '#f2f2f2',
-    justifyContent: 'space-between',
-  },
-  header: {
-    marginTop: 40,
+    justifyContent: 'center',
   },
   title: {
     fontSize: 28,
@@ -106,21 +107,21 @@ const styles = StyleSheet.create({
   subtitle: {
     textAlign: 'center',
     color: '#666',
-  },
-  inputContainer: {
-    flex: 1,
-    justifyContent: 'center',
+    marginBottom: 20,
   },
   input: {
     backgroundColor: '#fff',
+    marginBottom: 20,
   },
   button: {
-    marginTop: 20,
     padding: 5,
+    marginBottom: 10,
   },
-  footer: {
-    alignItems: 'center',
-    marginBottom: 30,
+  instructionsButton: {
+    alignSelf: 'center',
+  },
+  snackbar: {
+    backgroundColor: '#B00020',
   },
 });
 

@@ -4,7 +4,7 @@ import { create, all } from 'mathjs';
 
 // Configure math.js with custom logical operators
 const config = {
-  // No specific configurations needed for now
+  // No specific configurations needed
 };
 
 const math = create(all, config);
