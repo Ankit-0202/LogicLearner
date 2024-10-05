@@ -2,31 +2,24 @@
 
 import { create, all } from 'mathjs';
 
-// Configure math.js with custom logical operators
-const config = {};
+// Initialize math.js with all functionalities
+const math = create(all);
 
-// Initialize math.js
-const math = create(all, config);
-
-// Define custom logical functions and override existing ones to return numeric values
-math.import(
-  {
-    AND: (a, b) => (a && b) ? 1 : 0,
-    OR: (a, b) => (a || b) ? 1 : 0,
-    NOT: (a) => (!a) ? 1 : 0,
-    IMPLIES: (a, b) => (!a || b) ? 1 : 0,
-    IFF: (a, b) => (a === b) ? 1 : 0,
-    XOR: (a, b) => (a !== b) ? 1 : 0,
-    // Symbol-based operators
-    '&': (a, b) => (a && b) ? 1 : 0,
-    '|': (a, b) => (a || b) ? 1 : 0,
-    '~': (a) => (!a) ? 1 : 0,
-    '->': (a, b) => (!a || b) ? 1 : 0,
-    '<->': (a, b) => (a === b) ? 1 : 0,
-    '⊕': (a, b) => (a !== b) ? 1 : 0,
-  },
-  { override: true }
-);
+// Define custom logical functions in math.js to handle implications, biconditionals, and XOR
+math.import({
+  // Logical AND
+  and: (a, b) => a && b,
+  // Logical OR
+  or: (a, b) => a || b,
+  // Logical NOT
+  not: (a) => !a,
+  // Logical IMPLIES
+  implies: (a, b) => !a || b,
+  // Logical IFF (if and only if)
+  iff: (a, b) => a === b,
+  // Logical XOR
+  xor: (a, b) => a !== b,
+}, { override: true });
 
 // Function to extract subformulas using a stack-based approach
 const extractSubformulas = (formula) => {
@@ -57,59 +50,53 @@ const extractSubformulas = (formula) => {
   return Array.from(subformulas);
 };
 
-// Function to replace logical operator words and symbols with symbols for display
-const replaceOperatorsWithSymbols = (f) => {
-  return f
-    .replace(/AND|and/g, '∧')
-    .replace(/OR|or/g, '∨')
-    .replace(/NOT|not/g, '¬')
-    .replace(/IMPLIES|implies/g, '→')
-    .replace(/IFF|iff/g, '↔')
-    .replace(/XOR|xor/g, '⊕')
-    .replace(/\|/g, '∨')
-    .replace(/&/g, '∧')
-    .replace(/~/g, '¬');
+// Function to replace logical operator symbols and words with standardized operators for evaluation
+const normalizeOperators = (formula) => {
+  return formula
+    // Replace 'AND' (case-insensitive) with 'and'
+    .replace(/AND/gi, 'and')
+    // Replace 'OR' (case-insensitive) with 'or'
+    .replace(/OR/gi, 'or')
+    // Replace 'NOT', '!', '~' (case-insensitive) with 'not'
+    .replace(/NOT|!|~/gi, 'not')
+    // Replace 'IMPLIES', '->' (case-insensitive) with 'implies'
+    .replace(/IMPLIES|->/gi, 'implies')
+    // Replace 'IFF', '<->' (case-insensitive) with 'iff'
+    .replace(/IFF|<->/gi, 'iff')
+    // Replace 'XOR', '⊕' (case-insensitive) with 'xor'
+    .replace(/XOR|⊕/gi, 'xor');
 };
 
-// Function to replace implications and biconditionals with function calls
-const replaceImplications = (expr) => {
-  let newExpr = expr;
-
-  // Regular expressions to match implications and biconditionals
-  const impliesRegex = /(\b[A-Z]\b|\([^()]+\))\s*->\s*(\b[A-Z]\b|\([^()]+\))/g;
-  const iffRegex = /(\b[A-Z]\b|\([^()]+\))\s*<->\s*(\b[A-Z]\b|\([^()]+\))/g;
-
-  // Replace implications first
-  newExpr = newExpr.replace(impliesRegex, 'IMPLIES($1, $2)');
-
-  // Replace biconditionals
-  newExpr = newExpr.replace(iffRegex, 'IFF($1, $2)');
-
-  return newExpr;
+// Function to replace logical operator symbols and words with symbols for display
+const replaceOperatorsWithSymbols = (f) => {
+  return f
+    // Replace 'and' with '∧'
+    .replace(/and/g, '∧')
+    // Replace 'or' with '∨'
+    .replace(/or/g, '∨')
+    // Replace 'not' with '¬'
+    .replace(/not/g, '¬')
+    // Replace 'implies' with '→'
+    .replace(/implies/g, '→')
+    // Replace 'iff' with '↔'
+    .replace(/iff/g, '↔')
+    // Replace 'xor' with '⊕'
+    .replace(/xor/g, '⊕');
 };
 
 // Function to sanitize and prepare the expression for evaluation
 const prepareExpression = (formula, row) => {
-  let expr = formula;
+  // Normalize operators to standardized logical operators
+  let expr = normalizeOperators(formula);
 
-  // Replace implications and biconditionals with function calls
-  expr = replaceImplications(expr);
-
-  // Replace variables with their truth values (1 and 0)
+  // Replace variables with their boolean values (true/false)
   Object.keys(row).forEach((variable) => {
     if (variable !== 'Result') {
-      // Use word boundaries to replace only whole words
+      // Ensure that only standalone variables are replaced
       const regex = new RegExp(`\\b${variable}\\b`, 'g');
-      expr = expr.replace(regex, row[variable]);
+      expr = expr.replace(regex, row[variable] === 1 ? 'true' : 'false');
     }
   });
-
-  // Replace textual and symbol-based operators with symbolic equivalents for evaluation
-  expr = expr
-    .replace(/AND|and/gi, '&')
-    .replace(/OR|or/gi, '|')
-    .replace(/NOT|not/gi, '~')
-    .replace(/XOR|xor/gi, '⊕');
 
   return expr;
 };
@@ -145,36 +132,49 @@ const validateFormula = (formula) => {
   // Define operators
   const operators = ['AND', 'OR', 'NOT', 'IMPLIES', 'IFF', 'XOR', '&', '|', '~', '->', '<->'];
 
-  let expectOperand = true;
-
-  for (let i = 0; i < tokens.length; i++) {
-    const token = tokens[i].toUpperCase();
-    if (operators.includes(token)) {
-      if (token === 'NOT' || token === '~') {
-        // Unary operator expects an operand next
-        expectOperand = true;
-      } else {
-        // Binary operator expects an operand next
-        expectOperand = true;
-      }
-    } else if (/^[A-Z]$/.test(token)) {
-      // Operand
-      if (!expectOperand) {
-        return { valid: false, message: `Unexpected operand "${token}" at token ${i + 1}` };
-      }
-      expectOperand = false;
+  // Ensure that variables are single uppercase letters
+  for (let token of tokens) {
+    if (/^[A-Z]$/.test(token)) {
+      continue; // Valid variable
+    } else if (operators.includes(token.toUpperCase()) || token === '(' || token === ')') {
+      continue; // Valid operator or parenthesis
     } else {
-      return { valid: false, message: `Invalid token "${token}" at token ${i + 1}` };
+      return { valid: false, message: `Invalid token "${token}" in the formula.` };
     }
   }
 
-  if (expectOperand) {
+  // Ensure that the formula does not end with an operator
+  const lastToken = tokens[tokens.length - 1].toUpperCase();
+  if (operators.includes(lastToken)) {
     return { valid: false, message: 'Formula cannot end with an operator.' };
+  }
+
+  // Check for proper operator-operand sequence
+  let expectOperand = true;
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i].toUpperCase();
+    if (operators.includes(token)) {
+      if (token === 'NOT') {
+        expectOperand = true; // Unary operator expects an operand
+      } else {
+        expectOperand = true; // Binary operator expects an operand next
+      }
+    } else if (/^[A-Z]$/.test(token)) {
+      if (!expectOperand) {
+        return { valid: false, message: `Unexpected operand "${token}" at position ${i + 1}` };
+      }
+      expectOperand = false;
+    } else if (token === '(') {
+      expectOperand = true;
+    } else if (token === ')') {
+      expectOperand = false;
+    }
   }
 
   return { valid: true };
 };
 
+// Main function to create the truth table
 export const createTruthTable = (formula) => {
   // Normalize the formula: remove extra spaces
   const normalizedFormula = formula.replace(/\s+/g, ' ').trim();
@@ -193,7 +193,6 @@ export const createTruthTable = (formula) => {
   const symbolizedFormula = replaceOperatorsWithSymbols(normalizedFormula);
 
   // Extract unique variables from the formula (single uppercase letters)
-  // Use word boundaries to match only single uppercase letters not part of words
   const variablesMatch = normalizedFormula.match(/\b[A-Z]\b/g);
   const variables = variablesMatch ? Array.from(new Set(variablesMatch)).sort() : [];
 
