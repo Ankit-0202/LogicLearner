@@ -7,86 +7,93 @@ const math = create(all);
 
 // Define custom logical functions in math.js
 math.import({
-  // Logical AND
   and: (a, b) => Boolean(a && b),
-  // Logical OR
   or: (a, b) => Boolean(a || b),
-  // Logical NOT
   not: (a) => Boolean(!a),
-  // Logical IMPLIES
   implies: (a, b) => Boolean(!a || b),
-  // Logical IFF (if and only if)
   iff: (a, b) => Boolean(a === b),
-  // Logical XOR
   xor: (a, b) => Boolean(a !== b),
 }, { override: true });
 
-// Function to replace logical operator symbols and words with standardized operators for evaluation
-const normalizeOperators = (formula) => {
+// Function to add spaces between atoms and operators, while ignoring logical keywords like AND, OR, NOT
+const addSpacesToFormula = (formula) => {
   return formula
-    // Replace 'AND' (case-insensitive) with 'and'
-    .replace(/AND|\^/gi, 'and')
-    // Replace 'OR' (case-insensitive) with 'or'
-    .replace(/OR|\|/gi, 'or')
-    // Replace 'NOT', '!', '~' (case-insensitive) with 'not'
-    .replace(/NOT|!|~/gi, 'not')
-    // Replace 'IMPLIES', '->' (case-insensitive) with 'implies'
-    .replace(/IMPLIES|->|⇒/gi, 'implies')
-    // Replace 'IFF', '<->' (case-insensitive) with 'iff'
-    .replace(/IFF|<->|⇔/gi, 'iff')
-    // Replace 'XOR', '⊕' (case-insensitive) with 'xor'
-    .replace(/XOR|⊕/gi, 'xor');
+    .replace(/([A-Z])(\||&|~|->|<->|\(|\))/g, '$1 $2') // Add space after atoms
+    .replace(/(\||&|~|->|<->|\(|\))([A-Z])/g, '$1 $2') // Add space before atoms
+    .replace(/(\||&|~|->|<->)(?![A-Za-z])/g, '$1 ')    // Ensure space after symbols if no letter follows
+    .replace(/(?<![A-Za-z])(\||&|~|->|<->)/g, ' $1');  // Ensure space before symbols if no letter precedes
 };
 
-// Function to replace logical operator words with symbols for display
+// Function to normalize operators for evaluation
+const normalizeOperators = (formula) => {
+  return formula
+    .replace(/AND/gi, 'and')
+    .replace(/OR/gi, 'or')
+    .replace(/NOT/gi, 'not')
+    .replace(/!/gi, 'not')
+    .replace(/~/gi, 'not')
+    .replace(/\|/g, 'or')
+    .replace(/&/g, 'and')
+    .replace(/->/g, 'implies')
+    .replace(/<->/g, 'iff')
+    .replace(/⊕/g, 'xor');
+};
+
+// Function to replace operators for display purposes
 const replaceOperatorsWithSymbols = (formula) => {
   return formula
-    // Replace 'and' with '∧'
     .replace(/and/g, '∧')
-    // Replace 'or' with '∨'
     .replace(/or/g, '∨')
-    // Replace 'not/g' with '¬'
     .replace(/not/g, '¬')
-    // Replace 'implies' with '→'
     .replace(/implies/g, '→')
-    // Replace 'iff' with '↔'
     .replace(/iff/g, '↔')
-    // Replace 'xor' with '⊕'
     .replace(/xor/g, '⊕');
 };
 
-// Function to handle negations
-const handleNegations = (expr) => {
-  // Replace 'not X' with 'not(X)'
-  return expr.replace(/not\s+([A-Za-z]|\([^()]*\))/g, 'not($1)');
+// Function to extract subformulae from a formula using a stack-based approach
+const extractSubformulae = (formula) => {
+  const stack = [];
+  const subformulae = new Set(); // Use a set to avoid duplicates
+  const openParenIndices = [];
+
+  for (let i = 0; i < formula.length; i++) {
+    if (formula[i] === '(') {
+      stack.push('(');
+      openParenIndices.push(i);
+    } else if (formula[i] === ')') {
+      if (stack.length > 0) {
+        stack.pop();
+        const openIndex = openParenIndices.pop();
+        const subformula = formula.slice(openIndex + 1, i).trim(); // Extract the subformula inside parentheses
+        if (subformula.length > 0) {
+          subformulae.add(subformula);
+        }
+      }
+    }
+  }
+
+  return Array.from(subformulae); // Convert Set to Array
 };
 
-// Function to prepare the expression for evaluation
+// Function to sanitize and prepare the expression for evaluation
 const prepareExpression = (formula, row) => {
-  // Normalize operators
   let expr = normalizeOperators(formula);
-
-  // Handle negations
-  expr = handleNegations(expr);
-
-  // Replace variables with their boolean values
-  Object.keys(row).forEach((variable) => {
+  Object.keys(row).forEach(variable => {
     const regex = new RegExp(`\\b${variable}\\b`, 'g');
     expr = expr.replace(regex, row[variable]);
   });
-
   return expr;
 };
 
-// Function to validate the formula syntax
+// Validation function
 export const validateFormula = (formula) => {
   try {
-    const normalizedFormula = normalizeOperators(formula);
-    const expr = handleNegations(normalizedFormula);
+    const spacedFormula = addSpacesToFormula(formula);
+    const normalizedFormula = normalizeOperators(spacedFormula);
 
     // Replace variables with 'true' for validation
-    const variables = Array.from(new Set(expr.match(/[A-Z]/g)));
-    let exprForValidation = expr;
+    const variables = Array.from(new Set(normalizedFormula.match(/[A-Z]/g)));
+    let exprForValidation = normalizedFormula;
     variables.forEach((variable) => {
       const regex = new RegExp(`\\b${variable}\\b`, 'g');
       exprForValidation = exprForValidation.replace(regex, 'true');
@@ -102,15 +109,15 @@ export const validateFormula = (formula) => {
 
 // Main function to create the truth table
 export const createTruthTable = (formula) => {
-  // Validate formula syntax
-  const validation = validateFormula(formula);
+  const spacedFormula = addSpacesToFormula(formula);
+  const validation = validateFormula(spacedFormula);
+  
   if (!validation.valid) {
     throw new Error(validation.message);
   }
 
-  // Normalize formula for processing
-  const normalizedFormula = normalizeOperators(formula);
-
+  const normalizedFormula = normalizeOperators(spacedFormula);
+  
   // Extract variables (single uppercase letters)
   const variables = Array.from(new Set(normalizedFormula.match(/\b[A-Z]\b/g))).sort();
 
@@ -118,9 +125,11 @@ export const createTruthTable = (formula) => {
     throw new Error('No variables found in the formula.');
   }
 
-  // Prepare headers
-  const displayedFormula = replaceOperatorsWithSymbols(formula);
-  const headers = [...variables, displayedFormula];
+  // Extract subformulae
+  const subformulae = extractSubformulae(spacedFormula);
+
+  // Define headers: variables, subformulae, and the main formula
+  const headers = [...variables, ...subformulae.map(sub => replaceOperatorsWithSymbols(sub)), replaceOperatorsWithSymbols(spacedFormula)];
 
   // Generate truth table
   const numRows = Math.pow(2, variables.length);
@@ -130,19 +139,29 @@ export const createTruthTable = (formula) => {
     const row = {};
     const binary = i.toString(2).padStart(variables.length, '0');
 
-    // Assign truth values to variables
+    // Assign truth values to variables as 1 and 0
     variables.forEach((variable, index) => {
-      const value = binary[index] === '1';
-      row[variable] = value ? 1 : 0;
+      row[variable] = binary[index] === '1' ? 1 : 0;
     });
 
-    // Evaluate the formula
-    const expr = prepareExpression(formula, row);
+    // Evaluate subformulae
+    subformulae.forEach((subformula) => {
+      const expr = prepareExpression(subformula, row);
+      try {
+        const result = math.evaluate(expr);
+        row[replaceOperatorsWithSymbols(subformula)] = result ? 1 : 0;
+      } catch (error) {
+        row[replaceOperatorsWithSymbols(subformula)] = 'Error';
+      }
+    });
+
+    // Evaluate the main formula
+    const mainExpr = prepareExpression(normalizedFormula, row);
     try {
-      const result = math.evaluate(expr);
-      row[displayedFormula] = result ? 1 : 0;
+      const mainResult = math.evaluate(mainExpr);
+      row[replaceOperatorsWithSymbols(spacedFormula)] = mainResult ? 1 : 0;
     } catch (error) {
-      row[displayedFormula] = 'Error';
+      row[replaceOperatorsWithSymbols(spacedFormula)] = 'Error';
     }
 
     table.push(row);
