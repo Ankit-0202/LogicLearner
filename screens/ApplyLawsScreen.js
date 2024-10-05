@@ -51,7 +51,8 @@ const ApplyLawsScreen = () => {
       return;
     }
 
-    const validation = validateFormula(initialFormula);
+    const normalizedFormula = normalizeSymbols(initialFormula);
+    const validation = validateFormula(normalizedFormula);
     if (!validation.valid) {
       setFormulaError(validation.message);
       return;
@@ -60,7 +61,7 @@ const ApplyLawsScreen = () => {
     }
 
     setInitialFormulaSet(true);
-    setSteps([{ formula: initialFormula, rule: 'Initial Formula' }]);
+    setSteps([{ formula: replaceSymbolsWithLogicalSymbols(normalizedFormula), rule: 'Initial Formula' }]);
   };
 
   const handleApplyRule = () => {
@@ -76,11 +77,15 @@ const ApplyLawsScreen = () => {
       return;
     }
 
+    const normalizedNextFormula = normalizeSymbols(nextFormula);
     // Check if the rule is applied correctly
-    const isValidTransformation = applyRule(steps[steps.length - 1].formula, nextFormula, selectedRule);
+    const isValidTransformation = applyRule(steps[steps.length - 1].formula, normalizedNextFormula, selectedRule);
 
     if (isValidTransformation) {
-      setSteps([...steps, { formula: nextFormula, rule: selectedRuleLabel() }]);
+      setSteps([
+        ...steps,
+        { formula: replaceSymbolsWithLogicalSymbols(normalizedNextFormula), rule: selectedRuleLabel() },
+      ]);
       setNextFormula('');
       setSelectedRule('');
     } else {
@@ -90,7 +95,7 @@ const ApplyLawsScreen = () => {
   };
 
   const selectedRuleLabel = () => {
-    const rule = rules.find(r => r.value === selectedRule);
+    const rule = rules.find((r) => r.value === selectedRule);
     return rule ? rule.label : '';
   };
 
@@ -112,31 +117,37 @@ const ApplyLawsScreen = () => {
     }
   };
 
+  // Helper function to normalize symbols entered by the user
+  const normalizeSymbols = (formula) => {
+    return formula
+      .replace(/\|/g, 'or')
+      .replace(/&/g, 'and')
+      .replace(/~/g, 'not')
+      .replace(/¬/g, 'not');
+  };
+
+  // Helper function to replace logical words with their corresponding symbols for display
+  const replaceSymbolsWithLogicalSymbols = (formula) => {
+    return formula
+      .replace(/and/g, '∧')
+      .replace(/or/g, '∨')
+      .replace(/not/g, '¬');
+  };
+
   // Rule-Specific Verification Logic
-
   const checkDoubleNegation = (from, to) => {
-    // Apply Double Negation rule: ¬¬A ≡ A
-    const normFrom = normalizeFormula(from);
-    const normTo = normalizeFormula(to);
-
+    const normFrom = normalizeSymbols(from);
+    const normTo = normalizeSymbols(to);
     return normFrom === `not not ${normTo}` || `not not ${normFrom}` === normTo;
   };
 
   const checkDeMorgan = (from, to) => {
-    // Apply De Morgan's Law
-    const normFrom = normalizeFormula(from);
-    const normTo = normalizeFormula(to);
+    const normFrom = normalizeSymbols(from);
+    const normTo = normalizeSymbols(to);
 
-    // Handle patterns for De Morgan's
     const deMorganPatterns = [
-      {
-        from: /^not\s+\(\s*(.+)\s+and\s+(.+)\s*\)$/i,
-        to: /^\(\s*not\s+\1\s+or\s+not\s+\2\s*\)$/i,
-      },
-      {
-        from: /^not\s+\(\s*(.+)\s+or\s+(.+)\s*\)$/i,
-        to: /^\(\s*not\s+\1\s+and\s+not\s+\2\s*\)$/i,
-      },
+      { from: /^not\s*\(\s*(.+)\s*and\s*(.+)\s*\)$/i, to: /^\(\s*not\s*\1\s*or\s*not\s*\2\s*\)$/i },
+      { from: /^not\s*\(\s*(.+)\s*or\s*(.+)\s*\)$/i, to: /^\(\s*not\s*\1\s*and\s*not\s*\2\s*\)$/i },
     ];
 
     for (let pattern of deMorganPatterns) {
@@ -146,7 +157,6 @@ const ApplyLawsScreen = () => {
         return matchFrom[1] === matchTo[1] && matchFrom[2] === matchTo[2];
       }
 
-      // Check reverse
       const reverseMatchFrom = normTo.match(pattern.from);
       const reverseMatchTo = normFrom.match(pattern.to);
       if (reverseMatchFrom && reverseMatchTo) {
@@ -158,18 +168,18 @@ const ApplyLawsScreen = () => {
   };
 
   const checkCommutative = (from, to) => {
-    // Apply Commutative Law: A AND B ≡ B AND A or A OR B ≡ B OR A
-    const normFrom = normalizeFormula(from);
-    const normTo = normalizeFormula(to);
+    const normFrom = normalizeSymbols(from);
+    const normTo = normalizeSymbols(to);
 
     const commutativePattern = /^(.+)\s+(and|or)\s+(.+)$/i;
     const matchFrom = normFrom.match(commutativePattern);
     const matchTo = normTo.match(commutativePattern);
 
     if (matchFrom && matchTo) {
-      return matchFrom[2] === matchTo[2] && (
-        (matchFrom[1] === matchTo[3] && matchFrom[3] === matchTo[1]) ||
-        (matchFrom[1] === matchTo[1] && matchFrom[3] === matchTo[3])
+      return (
+        matchFrom[2] === matchTo[2] &&
+        ((matchFrom[1] === matchTo[3] && matchFrom[3] === matchTo[1]) || 
+        (matchFrom[1] === matchTo[1] && matchFrom[3] === matchTo[3]))
       );
     }
 
@@ -177,35 +187,27 @@ const ApplyLawsScreen = () => {
   };
 
   const checkAssociative = (from, to) => {
-    // Apply Associative Law: (A AND B) AND C ≡ A AND (B AND C)
-    const normFrom = normalizeFormula(from);
-    const normTo = normalizeFormula(to);
+    const normFrom = normalizeSymbols(from);
+    const normTo = normalizeSymbols(to);
 
-    const associativePattern = /^\(\s*(.+)\s+(and|or)\s+(.+)\s*\)\s+\2\s+(.+)$/i;
+    const associativePattern = /^\(\s*(.+)\s+(and|or)\s*(.+)\s*\)\s+\2\s+(.+)$/i;
     const matchFrom = normFrom.match(associativePattern);
     const matchTo = normTo.match(associativePattern);
 
     if (matchFrom && matchTo) {
-      return matchFrom[1] === matchTo[1] && matchFrom[3] === matchTo[3] && matchFrom[4] === matchTo[2];
+      return matchFrom[1] === matchTo[1] && matchFrom[3] === matchTo[3] && matchFrom[4] === matchTo[4];
     }
 
     return false;
   };
 
   const checkDistributive = (from, to) => {
-    // Apply Distributive Law: A AND (B OR C) ≡ (A AND B) OR (A AND C)
-    const normFrom = normalizeFormula(from);
-    const normTo = normalizeFormula(to);
+    const normFrom = normalizeSymbols(from);
+    const normTo = normalizeSymbols(to);
 
     const distributivePatterns = [
-      {
-        from: /^(.+)\s+and\s+\(\s*(.+)\s+or\s+(.+)\s*\)$/i,
-        to: /^\(\s*\1\s+and\s+\2\s*\)\s+or\s+\(\s*\1\s+and\s+\3\s*\)$/i,
-      },
-      {
-        from: /^(.+)\s+or\s+\(\s*(.+)\s+and\s+(.+)\s*\)$/i,
-        to: /^\(\s*\1\s+or\s+\2\s*\)\s+and\s+\(\s*\1\s+or\s+\3\s*\)$/i,
-      },
+      { from: /^(.+)\s+and\s*\(\s*(.+)\s+or\s*(.+)\s*\)$/i, to: /^\(\s*\1\s+and\s*\2\s*\)\s+or\s*\(\s*\1\s+and\s*\3\s*\)$/i },
+      { from: /^(.+)\s+or\s*\(\s*(.+)\s+and\s*(.+)\s*\)$/i, to: /^\(\s*\1\s+or\s*\2\s*\)\s+and\s*\(\s*\1\s+or\s*\3\s*\)$/i },
     ];
 
     for (let pattern of distributivePatterns) {
@@ -215,7 +217,6 @@ const ApplyLawsScreen = () => {
         return matchFrom[1] === matchTo[1] && matchFrom[2] === matchTo[2] && matchFrom[3] === matchTo[3];
       }
 
-      // Check reverse
       const reverseMatchFrom = normTo.match(pattern.from);
       const reverseMatchTo = normFrom.match(pattern.to);
       if (reverseMatchFrom && reverseMatchTo) {
@@ -224,11 +225,6 @@ const ApplyLawsScreen = () => {
     }
 
     return false;
-  };
-
-  const normalizeFormula = (formula) => {
-    // Normalize by converting to lowercase, removing extra spaces
-    return formula.replace(/\s+/g, ' ').trim().toLowerCase();
   };
 
   return (
@@ -328,10 +324,7 @@ const ApplyLawsScreen = () => {
                     contentStyle={styles.buttonContent}
                     labelStyle={styles.buttonLabel}
                     uppercase={false}
-                    disabled={
-                      !nextFormula.trim() ||
-                      !selectedRule
-                    }
+                    disabled={!nextFormula.trim() || !selectedRule}
                   >
                     Apply Rule
                   </Button>
