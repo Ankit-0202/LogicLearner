@@ -1,7 +1,7 @@
 // screens/TruthTableResultScreen.js
 
 import React, { useRef } from 'react';
-import { StyleSheet, ScrollView, SafeAreaView, Dimensions } from 'react-native';
+import { StyleSheet, ScrollView, SafeAreaView, View } from 'react-native';
 import { Text, DataTable, useTheme, Button } from 'react-native-paper';
 import * as Animatable from 'react-native-animatable';
 
@@ -53,28 +53,29 @@ const TruthTableResultScreen = ({ route, navigation }) => {
       {/* Outer ScrollView for vertical scrolling */}
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {/* Header ScrollView */}
-        <ScrollView
-          horizontal={true}
-          ref={headerScrollRef}
-          onScroll={handleHeaderScroll}
-          scrollEventThrottle={16}
-          showsHorizontalScrollIndicator={false}
-          style={styles.headerScroll}
-        >
-          <Animatable.View animation="fadeInDown" duration={1000} style={styles.header}>
-            <DataTable>
-              <DataTable.Header style={{ backgroundColor: colors.primary }}>
-                {headers.map((header, index) => (
-                  <DataTable.Title key={index} style={styles.headerCell}>
-                    <Text style={[styles.headerText, { color: colors.surface, textAlign: 'center' }]}>
-                      {header}
-                    </Text>
-                  </DataTable.Title>
-                ))}
-              </DataTable.Header>
-            </DataTable>
-          </Animatable.View>
-        </ScrollView>
+        <View style={styles.fixedHeader}>
+          <ScrollView
+            horizontal={true}
+            ref={headerScrollRef}
+            onScroll={handleHeaderScroll}
+            scrollEventThrottle={16}
+            showsHorizontalScrollIndicator={false}
+          >
+            <Animatable.View animation="fadeInDown" duration={1000} style={styles.header}>
+              <DataTable>
+                <DataTable.Header style={[styles.dataHeader, { backgroundColor: colors.primary }]}>
+                  {headers.map((header, index) => (
+                    <DataTable.Title key={index} style={styles.headerCell}>
+                      <Text style={[styles.headerText, { color: colors.surface }]}>
+                        {header}
+                      </Text>
+                    </DataTable.Title>
+                  ))}
+                </DataTable.Header>
+              </DataTable>
+            </Animatable.View>
+          </ScrollView>
+        </View>
 
         {/* Body ScrollView */}
         <ScrollView
@@ -82,8 +83,7 @@ const TruthTableResultScreen = ({ route, navigation }) => {
           ref={bodyScrollRef}
           onScroll={handleBodyScroll}
           scrollEventThrottle={16}
-          showsHorizontalScrollIndicator={false}
-          style={styles.bodyScroll}
+          showsHorizontalScrollIndicator={true}
         >
           <Animatable.View animation="fadeIn" duration={1000} style={styles.tableContainer}>
             <DataTable>
@@ -127,52 +127,51 @@ const TruthTableResultScreen = ({ route, navigation }) => {
   );
 };
 
-const { width } = Dimensions.get('window');
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff', // Adjust based on theme if necessary
+    backgroundColor: '#fff', // Adjust based on theme
   },
   scrollContainer: {
-    padding: 20,
+    paddingBottom: 100, // Ensure there's enough space at the bottom
   },
-  headerScroll: {
-    // Optional: Adjust height if needed
-  },
-  bodyScroll: {
-    // Optional: Adjust height if needed
-    marginTop: 0,
+  fixedHeader: {
+    zIndex: 10, // Ensure the header stays on top
+    backgroundColor: '#fff', // To avoid overlap issues with scroll
+    elevation: 2, // Adds shadow for iOS/Android
   },
   header: {
-    // No marginBottom to keep header sticky
+    paddingVertical: 5, // Add some padding for better readability
   },
-  tableContainer: {
-    // Adjust minWidth based on content
+  dataHeader: {
+    justifyContent: 'center',
+    paddingVertical: 8,
   },
   headerCell: {
     justifyContent: 'center',
-    alignItems: 'center', // Center the header text
-    paddingVertical: 8,
+    alignItems: 'center',
     paddingHorizontal: 12,
-    minWidth: 100, // Set a minimum width for each column to improve readability
+    minWidth: 120, // Adjust based on expected content size
   },
   headerText: {
     fontWeight: 'bold',
     fontSize: 16,
     textAlign: 'center',
   },
+  tableContainer: {
+    marginTop: 0,
+    paddingVertical: 10,
+  },
   cell: {
     justifyContent: 'center',
-    alignItems: 'center', // Center the cell text
-    paddingVertical: 8,
+    alignItems: 'center',
     paddingHorizontal: 12,
-    minWidth: 100, // Set a minimum width for each column to match header
+    minWidth: 120, // Ensure columns are wide enough for content
   },
   cellText: {
     textAlign: 'center',
     fontSize: 14,
-    color: '#333', // Adjust based on theme
+    color: '#333',
   },
   footer: {
     padding: 20,
