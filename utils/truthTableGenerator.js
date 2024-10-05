@@ -39,15 +39,15 @@ const normalizeOperators = (formula) => {
     .replace(/⊕/g, 'xor');
 };
 
-// Function to replace operators for display purposes
+// Function to replace all operators with consistent symbols for display in the truth table
 const replaceOperatorsWithSymbols = (formula) => {
   return formula
-    .replace(/and/g, '∧')
-    .replace(/or/g, '∨')
-    .replace(/not/g, '¬')
-    .replace(/implies/g, '→')
-    .replace(/iff/g, '↔')
-    .replace(/xor/g, '⊕');
+    .replace(/and/g, '∧')   // Conjunction
+    .replace(/or/g, '∨')    // Disjunction
+    .replace(/not/g, '¬')   // Negation
+    .replace(/implies/g, '→') // Implication
+    .replace(/iff/g, '↔')   // Biconditional
+    .replace(/xor/g, '⊕');  // Exclusive OR
 };
 
 // Function to extract subformulae from a formula using a stack-based approach
@@ -129,7 +129,11 @@ export const createTruthTable = (formula) => {
   const subformulae = extractSubformulae(spacedFormula);
 
   // Define headers: variables, subformulae, and the main formula
-  const headers = [...variables, ...subformulae.map(sub => replaceOperatorsWithSymbols(sub)), replaceOperatorsWithSymbols(spacedFormula)];
+  const headers = [
+    ...variables,
+    ...subformulae.map(sub => replaceOperatorsWithSymbols(sub)), // Use symbols for subformulae
+    replaceOperatorsWithSymbols(spacedFormula) // Use symbols for the main formula
+  ];
 
   // Generate truth table
   const numRows = Math.pow(2, variables.length);

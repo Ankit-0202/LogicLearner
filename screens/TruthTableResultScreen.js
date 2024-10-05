@@ -1,6 +1,6 @@
 // screens/TruthTableResultScreen.js
 
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { StyleSheet, ScrollView, SafeAreaView, View } from 'react-native';
 import { Text, DataTable, useTheme, Button } from 'react-native-paper';
 import * as Animatable from 'react-native-animatable';
@@ -8,10 +8,36 @@ import * as Animatable from 'react-native-animatable';
 const TruthTableResultScreen = ({ route, navigation }) => {
   const { headers, table, formula } = route.params;
   const { colors } = useTheme();
+  const [columnWidths, setColumnWidths] = useState([]);
 
   // Refs for synchronized scrolling
   const headerScrollRef = useRef(null);
   const bodyScrollRef = useRef(null);
+
+  // Function to handle horizontal scroll synchronization
+  const handleHeaderScroll = (event) => {
+    const x = event.nativeEvent.contentOffset.x;
+    if (bodyScrollRef.current) {
+      bodyScrollRef.current.scrollTo({ x, animated: false });
+    }
+  };
+
+  const handleBodyScroll = (event) => {
+    const x = event.nativeEvent.contentOffset.x;
+    if (headerScrollRef.current) {
+      headerScrollRef.current.scrollTo({ x, animated: false });
+    }
+  };
+
+  // Function to capture the width of each header cell
+  const measureHeaderWidth = (index, event) => {
+    const { width } = event.nativeEvent.layout;
+    setColumnWidths((prevWidths) => {
+      const newWidths = [...prevWidths];
+      newWidths[index] = width;
+      return newWidths;
+    });
+  };
 
   if (!headers || !table || !formula) {
     return (
@@ -33,21 +59,6 @@ const TruthTableResultScreen = ({ route, navigation }) => {
     );
   }
 
-  // Function to handle horizontal scroll synchronization
-  const handleHeaderScroll = (event) => {
-    const x = event.nativeEvent.contentOffset.x;
-    if (bodyScrollRef.current) {
-      bodyScrollRef.current.scrollTo({ x, animated: false });
-    }
-  };
-
-  const handleBodyScroll = (event) => {
-    const x = event.nativeEvent.contentOffset.x;
-    if (headerScrollRef.current) {
-      headerScrollRef.current.scrollTo({ x, animated: false });
-    }
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       {/* Outer container for vertical scrolling */}
@@ -68,7 +79,11 @@ const TruthTableResultScreen = ({ route, navigation }) => {
               <DataTable>
                 <DataTable.Header style={[styles.dataHeader, { backgroundColor: colors.primary }]}>
                   {headers.map((header, index) => (
-                    <DataTable.Title key={index} style={styles.headerCell}>
+                    <DataTable.Title
+                      key={index}
+                      style={styles.headerCell}
+                      onLayout={(event) => measureHeaderWidth(index, event)}
+                    >
                       <Text style={[styles.headerText, { color: colors.surface }]}>
                         {header}
                       </Text>
@@ -100,7 +115,13 @@ const TruthTableResultScreen = ({ route, navigation }) => {
                 >
                   <DataTable.Row>
                     {headers.map((header, colIndex) => (
-                      <DataTable.Cell key={colIndex} style={styles.cell}>
+                      <DataTable.Cell
+                        key={colIndex}
+                        style={[
+                          styles.cell,
+                          { width: columnWidths[colIndex] || 100 }, // Set width based on the header width
+                        ]}
+                      >
                         <Text style={styles.cellText}>{row[header]}</Text>
                       </DataTable.Cell>
                     ))}
@@ -155,7 +176,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 12,
-    minWidth: 120, // Minimum width for columns
+    minWidth: 100, // Default minimum width for columns
     flex: 1, // Adjust width dynamically
   },
   headerText: {
@@ -174,8 +195,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 12,
-    minWidth: 120, // Minimum width for columns
-    flex: 1, // Adjust width dynamically
   },
   cellText: {
     textAlign: 'center',
