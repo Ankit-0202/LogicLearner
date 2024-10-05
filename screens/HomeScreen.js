@@ -39,6 +39,18 @@ const HomeScreen = ({ navigation }) => {
           >
             Check Equivalence
           </Button>
+          <Button
+            mode="contained"
+            onPress={() => navigation.navigate('ApplyLaws')}
+            style={styles.button}
+            icon="format-list-bulleted"
+            contentStyle={styles.buttonContent}
+            labelStyle={styles.buttonLabel}
+            animated
+            uppercase={false}
+          >
+            Equivalence Assistant
+          </Button>
         </View>
       </Animatable.View>
     </SafeAreaView>

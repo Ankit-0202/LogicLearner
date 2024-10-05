@@ -92,7 +92,7 @@ const TruthTableScreen = ({ navigation }) => {
             <Animatable.View animation="fadeInUp" duration={1200} delay={200} style={styles.inputContainer}>
               <TextInput
                 label="Propositional Formula"
-                placeholder="e.g., A AND (B OR C)"
+                placeholder="e.g. A AND (B OR C)"
                 value={formula}
                 onChangeText={handleFormulaChange}
                 mode="outlined"
