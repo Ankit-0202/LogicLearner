@@ -71,9 +71,29 @@ const replaceOperatorsWithSymbols = (f) => {
     .replace(/~/g, '¬');
 };
 
+// Function to replace implications and biconditionals with function calls
+const replaceImplications = (expr) => {
+  let newExpr = expr;
+
+  // Regular expressions to match implications and biconditionals
+  const impliesRegex = /(\b[A-Z]\b|\([^()]+\))\s*->\s*(\b[A-Z]\b|\([^()]+\))/g;
+  const iffRegex = /(\b[A-Z]\b|\([^()]+\))\s*<->\s*(\b[A-Z]\b|\([^()]+\))/g;
+
+  // Replace implications first
+  newExpr = newExpr.replace(impliesRegex, 'IMPLIES($1, $2)');
+
+  // Replace biconditionals
+  newExpr = newExpr.replace(iffRegex, 'IFF($1, $2)');
+
+  return newExpr;
+};
+
 // Function to sanitize and prepare the expression for evaluation
 const prepareExpression = (formula, row) => {
   let expr = formula;
+
+  // Replace implications and biconditionals with function calls
+  expr = replaceImplications(expr);
 
   // Replace variables with their truth values (1 and 0)
   Object.keys(row).forEach((variable) => {
@@ -89,8 +109,6 @@ const prepareExpression = (formula, row) => {
     .replace(/AND|and/gi, '&')
     .replace(/OR|or/gi, '|')
     .replace(/NOT|not/gi, '~')
-    .replace(/IMPLIES|implies/gi, '->')
-    .replace(/IFF|iff/gi, '<->')
     .replace(/XOR|xor/gi, '⊕');
 
   return expr;
@@ -118,7 +136,8 @@ const validateFormula = (formula) => {
   }
 
   // Tokenize the formula
-  const tokens = normalizedFormula.match(/(\b[A-Z]\b|AND|OR|NOT|IMPLIES|IFF|XOR|&|\||~|->|<->|\(|\))/gi);
+  // Prioritize longer operators first to prevent partial matches
+  const tokens = normalizedFormula.match(/(\b[A-Z]\b|<->|->|AND|OR|NOT|IMPLIES|IFF|XOR|&|\||~|\(|\))/gi);
   if (!tokens) {
     return { valid: false, message: 'No valid tokens found in the formula.' };
   }

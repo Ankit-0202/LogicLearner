@@ -169,6 +169,11 @@ const TruthTableScreen = ({ navigation }) => {
 
 // Function to validate the formula syntax
 const validateFormula = (formula) => {
+  // Use the same validateFormula function from truthTableGenerator.js
+  // This ensures consistency between validation and truth table generation
+  // You might consider exporting this function from truthTableGenerator.js
+  // For simplicity, it's defined here again
+
   // Normalize the formula: remove extra spaces
   const normalizedFormula = formula.replace(/\s+/g, ' ').trim();
 
