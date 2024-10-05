@@ -1,84 +1,70 @@
 // screens/TruthTableResultScreen.js
 
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
-import { Text, DataTable, ActivityIndicator, useTheme, Snackbar, Button } from 'react-native-paper';
+import React from 'react';
+import { StyleSheet, ScrollView, SafeAreaView, Dimensions } from 'react-native';
+import { Text, DataTable, useTheme, Button } from 'react-native-paper';
 import * as Animatable from 'react-native-animatable';
-import { createTruthTable } from '../utils/truthTableGenerator';
 
 const TruthTableResultScreen = ({ route, navigation }) => {
-  const { formula } = route.params || {}; // Handle cases where route.params might be undefined
-  const [truthTable, setTruthTable] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [visible, setVisible] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-
+  const { headers, table, formula } = route.params;
   const { colors } = useTheme();
 
-  useEffect(() => {
-    if (!formula) {
-      setSnackbarMessage('No formula provided.');
-      setVisible(true);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const table = createTruthTable(formula);
-      setTruthTable(table);
-    } catch (err) {
-      setSnackbarMessage(err.message);
-      setVisible(true);
-    } finally {
-      setLoading(false);
-    }
-  }, [formula]);
-
-  if (loading) {
+  if (!headers || !table || !formula) {
     return (
-      <View style={styles.loader}>
-        <ActivityIndicator animating={true} color={colors.primary} size="large" />
-        <Text style={styles.loaderText}>Generating truth table...</Text>
-      </View>
+      <SafeAreaView style={styles.errorContainer}>
+        <Text style={[styles.errorText, { color: colors.error }]}>Incomplete data provided.</Text>
+        <Button
+          mode="contained"
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+          icon="arrow-left"
+          contentStyle={styles.backButtonContent}
+          labelStyle={styles.backButtonLabel}
+          animated
+          uppercase={false}
+        >
+          Back to Generator
+        </Button>
+      </SafeAreaView>
     );
   }
-
-  if (truthTable.length === 0) {
-    return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>No data available.</Text>
-      </View>
-    );
-  }
-
-  const headers = Object.keys(truthTable[0]);
 
   return (
-    <View style={styles.container}>
-      <ScrollView horizontal>
-        <Animatable.View animation="fadeIn" duration={1000} style={styles.tableContainer}>
+    <SafeAreaView style={styles.container}>
+      {/* Outer ScrollView for vertical scrolling */}
+      <ScrollView 
+        contentContainerStyle={styles.scrollContainer} 
+        stickyHeaderIndices={[0]} // Make the header sticky
+      >
+        {/* Header */}
+        <Animatable.View animation="fadeInDown" duration={1000} style={styles.header}>
           <DataTable>
             <DataTable.Header style={{ backgroundColor: colors.primary }}>
-              {headers.map((header) => (
-                <DataTable.Title key={header} style={styles.headerCell}>
-                  <Text style={[styles.headerText, { color: colors.surface }]}>
+              {headers.map((header, index) => (
+                <DataTable.Title key={index} style={styles.headerCell}>
+                  <Text style={[styles.headerText, { color: colors.surface, textAlign: 'center' }]}>
                     {header}
                   </Text>
                 </DataTable.Title>
               ))}
             </DataTable.Header>
+          </DataTable>
+        </Animatable.View>
 
-            {truthTable.map((row, index) => (
+        {/* Table Rows */}
+        <Animatable.View animation="fadeIn" duration={1000} style={styles.tableContainer}>
+          <DataTable>
+            {table.map((row, rowIndex) => (
               <Animatable.View 
-                key={index} 
+                key={rowIndex} 
                 animation="fadeInUp" 
-                delay={index * 100} 
+                delay={rowIndex * 100} 
                 duration={500}
               >
                 <DataTable.Row>
-                  {headers.map((header) => (
-                    <DataTable.Cell key={header} style={styles.cell}>
-                      <Text>{row[header].toString()}</Text>
+                  {headers.map((header, colIndex) => (
+                    <DataTable.Cell key={colIndex} style={styles.cell}>
+                      <Text style={styles.cellText}>{row[header]}</Text>
                     </DataTable.Cell>
                   ))}
                 </DataTable.Row>
@@ -88,10 +74,11 @@ const TruthTableResultScreen = ({ route, navigation }) => {
         </Animatable.View>
       </ScrollView>
 
-      <View style={styles.footer}>
+      {/* Footer with Back Button */}
+      <Animatable.View animation="fadeInUp" duration={1000} delay={200} style={styles.footer}>
         <Button
-          mode="outlined"
-          onPress={() => navigation.navigate('TruthTable')}
+          mode="contained"
+          onPress={() => navigation.goBack()}
           style={styles.backButton}
           icon="arrow-left"
           contentStyle={styles.backButtonContent}
@@ -99,74 +86,58 @@ const TruthTableResultScreen = ({ route, navigation }) => {
           animated
           uppercase={false}
         >
-          Back to Generate
+          Back to Generator
         </Button>
-      </View>
-
-      <Snackbar
-        visible={visible}
-        onDismiss={() => setVisible(false)}
-        duration={3000}
-        action={{
-          label: 'Dismiss',
-          onPress: () => {
-            setVisible(false);
-          },
-        }}
-        style={styles.snackbar}
-      >
-        {snackbarMessage}
-      </Snackbar>
-    </View>
+      </Animatable.View>
+    </SafeAreaView>
   );
 };
+
+const { width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 10,
-    backgroundColor: '#fff',
+    backgroundColor: '#fff', // Adjust based on theme if necessary
   },
-  loader: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  scrollContainer: {
+    padding: 20,
+    // No need to center content since it's scrollable
   },
-  loaderText: {
-    marginTop: 10,
-    color: '#666',
-    fontSize: 16,
-  },
-  errorContainer: {
-    flex:1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding:20,
-  },
-  errorText: {
-    color: '#B00020',
-    fontSize: 18,
+  header: {
+    // No marginBottom to keep header sticky
   },
   tableContainer: {
-    paddingVertical: 10,
+    width: '100%',
+    // Optional: Add marginTop if needed
   },
   headerCell: {
-    minWidth: 80,
+    flex: 1,
     justifyContent: 'center',
+    alignItems: 'center', // Center the header text
     paddingVertical: 8,
+    minWidth: 80, // Set a minimum width for each column to improve readability
   },
   headerText: {
     fontWeight: 'bold',
     fontSize: 16,
+    textAlign: 'center',
   },
   cell: {
-    minWidth: 80,
+    flex: 1,
     justifyContent: 'center',
+    alignItems: 'center', // Center the cell text
     paddingVertical: 8,
+    minWidth: 80, // Set a minimum width for each column to improve readability
+  },
+  cellText: {
+    textAlign: 'center',
+    fontSize: 14,
+    color: '#333', // Adjust based on theme
   },
   footer: {
+    padding: 20,
     alignItems: 'center',
-    marginTop: 20,
   },
   backButton: {
     borderRadius: 8,
@@ -178,8 +149,16 @@ const styles = StyleSheet.create({
   backButtonLabel: {
     fontSize: 16,
   },
-  snackbar: {
-    backgroundColor: '#B00020',
+  errorContainer: {
+    flex:1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding:20,
+  },
+  errorText: {
+    fontSize: 18,
+    textAlign: 'center',
+    marginBottom: 20,
   },
 });
 

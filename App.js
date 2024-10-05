@@ -9,9 +9,9 @@ import { ThemeProvider } from './contexts/ThemeContext'; // Ensure ThemeProvider
 import HomeScreen from './screens/HomeScreen';
 import TruthTableScreen from './screens/TruthTableScreen';
 import TruthTableResultScreen from './screens/TruthTableResultScreen'; // New screen
-import EquivalenceScreen from './screens/EquivalenceScreen'; // New screen
-import EquivalenceRulesScreen from './screens/EquivalenceRulesScreen'; // Existing screen
-import InstructionsScreen from './screens/InstructionsScreen'; // Existing screen
+import InstructionsScreen from './screens/InstructionsScreen';
+import EquivalenceRulesScreen from './screens/EquivalenceRulesScreen';
+import EquivalenceScreen from './screens/EquivalenceScreen';
 
 const Stack = createStackNavigator();
 
@@ -38,12 +38,17 @@ const AppContent = () => {
         <Stack.Screen 
           name="TruthTable" 
           component={TruthTableScreen} 
-          options={{ title: 'Truth Table Generation' }} 
+          options={{ title: 'Generate Truth Table' }} 
         />
         <Stack.Screen 
           name="TruthTableResult" 
           component={TruthTableResultScreen} 
-          options={{ title: 'Truth Table' }} 
+          options={{ title: 'Truth Table Result' }} 
+        />
+        <Stack.Screen 
+          name="Instructions" 
+          component={InstructionsScreen} 
+          options={{ title: 'How It Works' }} 
         />
         <Stack.Screen 
           name="Equivalence" 
@@ -54,11 +59,6 @@ const AppContent = () => {
           name="EquivalenceRules" 
           component={EquivalenceRulesScreen} 
           options={{ title: 'Equivalence Rules' }} 
-        />
-        <Stack.Screen 
-          name="Instructions" 
-          component={InstructionsScreen} 
-          options={{ title: 'How It Works' }} 
         />
       </Stack.Navigator>
     </NavigationContainer>

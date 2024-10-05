@@ -1,23 +1,18 @@
 // screens/TruthTableScreen.js
 
 import React, { useState } from 'react';
-import { StyleSheet, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
-import { TextInput, Button, Title, Paragraph, Snackbar, useTheme } from 'react-native-paper';
+import { StyleSheet, ScrollView, SafeAreaView, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { Text, ActivityIndicator, useTheme, Snackbar, Button, TextInput } from 'react-native-paper';
 import * as Animatable from 'react-native-animatable';
+import { createTruthTable } from '../utils/truthTableGenerator';
 
 const TruthTableScreen = ({ navigation }) => {
   const [formula, setFormula] = useState('');
+  const [loading, setLoading] = useState(false);
   const [visible, setVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
   const { colors } = useTheme();
-
-  // Validation function
-  const isValidFormula = (formula) => {
-    // Allowed characters: uppercase letters, spaces, parentheses, logical operators (&, |, ~, ->, <->)
-    const regex = /^[A-Z\s\(\)&|~\-<>]*$/;
-    return regex.test(formula);
-  };
 
   const handleGenerate = () => {
     if (!formula.trim()) {
@@ -25,115 +20,140 @@ const TruthTableScreen = ({ navigation }) => {
       setVisible(true);
       return;
     }
-    if (!isValidFormula(formula)) {
-      setSnackbarMessage('Invalid formula syntax. Use only uppercase letters and allowed operators.');
+
+    setLoading(true);
+
+    try {
+      const { headers, table } = createTruthTable(formula);
+      if (table.length === 0) {
+        setSnackbarMessage('No variables found in the formula.');
+        setVisible(true);
+      } else {
+        // Navigate to TruthTableResultScreen with headers and table data
+        navigation.navigate('TruthTableResult', { headers, table, formula });
+      }
+    } catch (err) {
+      setSnackbarMessage(err.message);
       setVisible(true);
-      return;
+    } finally {
+      setLoading(false);
     }
-    // Navigate to TruthTableResultScreen with the formula as a parameter
-    navigation.navigate('TruthTableResult', { formula });
   };
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <KeyboardAvoidingView 
-        style={styles.container} 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <Animatable.View animation="fadeInUp" duration={1000} style={styles.header}>
-          <Title style={styles.title}>Generate Truth Table</Title>
-          <Paragraph style={styles.subtitle}>
-            Enter a propositional logic formula to generate its truth table.
-          </Paragraph>
-        </Animatable.View>
-
-        <Animatable.View animation="fadeInUp" duration={1200} delay={200} style={styles.inputContainer}>
-          <TextInput
-            label="Logic Formula"
-            placeholder="e.g., A AND (B OR C)"
-            value={formula}
-            onChangeText={setFormula}
-            mode="outlined"
-            style={styles.input}
-            autoCapitalize="characters"
-            left={<TextInput.Icon name="math-compass" />}
-          />
-          <Button 
-            mode="contained" 
-            onPress={handleGenerate} 
-            style={styles.button}
-            icon="table"
-            contentStyle={styles.buttonContent}
-            labelStyle={styles.buttonLabel}
-            animated
-            uppercase={false}
-          >
-            Generate Truth Table
-          </Button>
-        </Animatable.View>
-
-        <Animatable.View animation="fadeInUp" duration={1400} delay={400} style={styles.footer}>
-          <Button 
-            mode="text" 
-            onPress={() => navigation.navigate('Instructions')}
-            style={styles.instructionsButton}
-            icon="information"
-            uppercase={false}
-          >
-            How It Works
-          </Button>
-        </Animatable.View>
-
-        <Snackbar
-          visible={visible}
-          onDismiss={() => setVisible(false)}
-          duration={3000}
-          action={{
-            label: 'Dismiss',
-            onPress: () => {
-              setVisible(false);
-            },
-          }}
-          style={styles.snackbar}
+    <SafeAreaView style={styles.container}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <KeyboardAvoidingView 
+          style={styles.innerContainer} 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-          {snackbarMessage}
-        </Snackbar>
-      </KeyboardAvoidingView>
-    </TouchableWithoutFeedback>
+          <ScrollView contentContainerStyle={styles.scrollContainer}>
+            <Animatable.View animation="fadeInDown" duration={1000} style={styles.header}>
+              <Text style={styles.title}>Truth Table Generator</Text>
+            </Animatable.View>
+
+            <Animatable.View animation="fadeInUp" duration={1200} delay={200} style={styles.inputContainer}>
+              <TextInput
+                label="Propositional Formula"
+                placeholder="e.g., A AND (B OR C)"
+                value={formula}
+                onChangeText={setFormula}
+                mode="outlined"
+                style={styles.input}
+                autoCapitalize="characters"
+                left={<TextInput.Icon name="math-compass" />}
+              />
+              <Button 
+                mode="contained" 
+                onPress={handleGenerate} 
+                style={styles.button}
+                icon="table"
+                contentStyle={styles.buttonContent}
+                labelStyle={styles.buttonLabel}
+                animated
+                uppercase={false}
+              >
+                Generate Truth Table
+              </Button>
+            </Animatable.View>
+
+            {loading && (
+              <View style={styles.loader}>
+                <ActivityIndicator animating={true} color={colors.primary} size="large" />
+                <Text style={[styles.loaderText, { color: colors.text }]}>Generating truth table...</Text>
+              </View>
+            )}
+
+            <Animatable.View animation="fadeInUp" duration={1000} delay={300} style={styles.footer}>
+              <Button
+                mode="outlined"
+                onPress={() => navigation.navigate('Instructions')}
+                style={styles.instructionsButton}
+                icon="information"
+                contentStyle={styles.instructionsButtonContent}
+                labelStyle={styles.instructionsButtonLabel}
+                animated
+                uppercase={false}
+              >
+                How It Works
+              </Button>
+            </Animatable.View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </TouchableWithoutFeedback>
+
+      <Snackbar
+        visible={visible}
+        onDismiss={() => setVisible(false)}
+        duration={3000}
+        action={{
+          label: 'Dismiss',
+          onPress: () => {
+            setVisible(false);
+          },
+        }}
+        style={styles.snackbar}
+      >
+        {snackbarMessage}
+      </Snackbar>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#fff', // Adjust based on theme if necessary
+  },
+  innerContainer: {
+    flex: 1,
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     padding: 20,
-    backgroundColor: 'transparent',
-    justifyContent: 'space-between',
   },
   header: {
-    marginTop: 40,
+    marginBottom: 20,
     alignItems: 'center',
   },
   title: {
     fontSize: 28,
     textAlign: 'center',
-    marginBottom: 10,
-    color: '#333',
-  },
-  subtitle: {
-    textAlign: 'center',
-    color: '#666',
+    color: '#333', // Adjust based on theme
   },
   inputContainer: {
-    flex: 1,
-    justifyContent: 'center',
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 20,
   },
   input: {
-    backgroundColor: '#fff',
+    width: '100%',
+    marginBottom: 20,
   },
   button: {
-    marginTop: 20,
-    padding: 5,
+    width: '100%',
     borderRadius: 8,
   },
   buttonContent: {
@@ -142,12 +162,29 @@ const styles = StyleSheet.create({
   buttonLabel: {
     fontSize: 16,
   },
-  footer: {
+  loader: {
+    marginVertical: 20,
     alignItems: 'center',
-    marginBottom: 30,
+  },
+  loaderText: {
+    marginTop: 10,
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  footer: {
+    paddingTop: 20,
+    alignItems: 'center',
+    width: '100%',
   },
   instructionsButton: {
-    alignSelf: 'center',
+    borderRadius: 8,
+    width: '80%',
+  },
+  instructionsButtonContent: {
+    height: 50,
+  },
+  instructionsButtonLabel: {
+    fontSize: 16,
   },
   snackbar: {
     backgroundColor: '#B00020',
