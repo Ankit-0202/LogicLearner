@@ -5,76 +5,47 @@ import { create, all } from 'mathjs';
 // Initialize math.js with all functionalities
 const math = create(all);
 
-// Define custom logical functions in math.js to handle implications, biconditionals, and XOR
+// Define custom logical functions in math.js
 math.import({
   // Logical AND
-  and: (a, b) => a && b,
+  and: (a, b) => Boolean(a && b),
   // Logical OR
-  or: (a, b) => a || b,
+  or: (a, b) => Boolean(a || b),
   // Logical NOT
-  not: (a) => !a,
+  not: (a) => Boolean(!a),
   // Logical IMPLIES
-  implies: (a, b) => !a || b,
+  implies: (a, b) => Boolean(!a || b),
   // Logical IFF (if and only if)
-  iff: (a, b) => a === b,
+  iff: (a, b) => Boolean(a === b),
   // Logical XOR
-  xor: (a, b) => a !== b,
+  xor: (a, b) => Boolean(a !== b),
 }, { override: true });
-
-// Function to extract subformulas using a stack-based approach
-const extractSubformulas = (formula) => {
-  const stack = [];
-  const subformulas = new Set();
-  const openIndices = [];
-
-  for (let i = 0; i < formula.length; i++) {
-    if (formula[i] === '(') {
-      stack.push('(');
-      openIndices.push(i);
-    } else if (formula[i] === ')') {
-      if (stack.length === 0) {
-        // Unmatched closing parenthesis; handled in validation
-        continue;
-      }
-      stack.pop();
-      const startIndex = openIndices.pop();
-      if (stack.length === 0) {
-        const subformula = formula.slice(startIndex + 1, i).trim();
-        if (subformula.length > 0) {
-          subformulas.add(subformula);
-        }
-      }
-    }
-  }
-
-  return Array.from(subformulas);
-};
 
 // Function to replace logical operator symbols and words with standardized operators for evaluation
 const normalizeOperators = (formula) => {
   return formula
     // Replace 'AND' (case-insensitive) with 'and'
-    .replace(/AND/gi, 'and')
+    .replace(/AND|\^/gi, 'and')
     // Replace 'OR' (case-insensitive) with 'or'
-    .replace(/OR/gi, 'or')
+    .replace(/OR|\|/gi, 'or')
     // Replace 'NOT', '!', '~' (case-insensitive) with 'not'
     .replace(/NOT|!|~/gi, 'not')
     // Replace 'IMPLIES', '->' (case-insensitive) with 'implies'
-    .replace(/IMPLIES|->/gi, 'implies')
+    .replace(/IMPLIES|->|⇒/gi, 'implies')
     // Replace 'IFF', '<->' (case-insensitive) with 'iff'
-    .replace(/IFF|<->/gi, 'iff')
+    .replace(/IFF|<->|⇔/gi, 'iff')
     // Replace 'XOR', '⊕' (case-insensitive) with 'xor'
     .replace(/XOR|⊕/gi, 'xor');
 };
 
-// Function to replace logical operator symbols and words with symbols for display
-const replaceOperatorsWithSymbols = (f) => {
-  return f
+// Function to replace logical operator words with symbols for display
+const replaceOperatorsWithSymbols = (formula) => {
+  return formula
     // Replace 'and' with '∧'
     .replace(/and/g, '∧')
     // Replace 'or' with '∨'
     .replace(/or/g, '∨')
-    // Replace 'not' with '¬'
+    // Replace 'not/g' with '¬'
     .replace(/not/g, '¬')
     // Replace 'implies' with '→'
     .replace(/implies/g, '→')
@@ -84,128 +55,74 @@ const replaceOperatorsWithSymbols = (f) => {
     .replace(/xor/g, '⊕');
 };
 
-// Function to sanitize and prepare the expression for evaluation
+// Function to handle negations
+const handleNegations = (expr) => {
+  // Replace 'not X' with 'not(X)'
+  return expr.replace(/not\s+([A-Za-z]|\([^()]*\))/g, 'not($1)');
+};
+
+// Function to prepare the expression for evaluation
 const prepareExpression = (formula, row) => {
-  // Normalize operators to standardized logical operators
+  // Normalize operators
   let expr = normalizeOperators(formula);
 
-  // Replace variables with their boolean values (true/false)
+  // Handle negations
+  expr = handleNegations(expr);
+
+  // Replace variables with their boolean values
   Object.keys(row).forEach((variable) => {
-    if (variable !== 'Result') {
-      // Ensure that only standalone variables are replaced
-      const regex = new RegExp(`\\b${variable}\\b`, 'g');
-      expr = expr.replace(regex, row[variable] === 1 ? 'true' : 'false');
-    }
+    const regex = new RegExp(`\\b${variable}\\b`, 'g');
+    expr = expr.replace(regex, row[variable]);
   });
 
   return expr;
 };
 
 // Function to validate the formula syntax
-const validateFormula = (formula) => {
-  // Normalize the formula: remove extra spaces
-  const normalizedFormula = formula.replace(/\s+/g, ' ').trim();
+export const validateFormula = (formula) => {
+  try {
+    const normalizedFormula = normalizeOperators(formula);
+    const expr = handleNegations(normalizedFormula);
 
-  // Check for balanced parentheses
-  let stack = [];
-  for (let i = 0; i < normalizedFormula.length; i++) {
-    if (normalizedFormula[i] === '(') {
-      stack.push(i);
-    } else if (normalizedFormula[i] === ')') {
-      if (stack.length === 0) {
-        return { valid: false, message: `Unmatched closing parenthesis at position ${i + 1}` };
-      }
-      stack.pop();
-    }
+    // Replace variables with 'true' for validation
+    const variables = Array.from(new Set(expr.match(/[A-Z]/g)));
+    let exprForValidation = expr;
+    variables.forEach((variable) => {
+      const regex = new RegExp(`\\b${variable}\\b`, 'g');
+      exprForValidation = exprForValidation.replace(regex, 'true');
+    });
+
+    // Evaluate the expression to check for syntax errors
+    math.evaluate(exprForValidation);
+    return { valid: true };
+  } catch (error) {
+    return { valid: false, message: error.message };
   }
-  if (stack.length > 0) {
-    return { valid: false, message: `Unmatched opening parenthesis at position ${stack.pop() + 1}` };
-  }
-
-  // Tokenize the formula
-  // Prioritize longer operators first to prevent partial matches
-  const tokens = normalizedFormula.match(/(\b[A-Z]\b|<->|->|AND|OR|NOT|IMPLIES|IFF|XOR|&|\||~|\(|\))/gi);
-  if (!tokens) {
-    return { valid: false, message: 'No valid tokens found in the formula.' };
-  }
-
-  // Define operators
-  const operators = ['AND', 'OR', 'NOT', 'IMPLIES', 'IFF', 'XOR', '&', '|', '~', '->', '<->'];
-
-  // Ensure that variables are single uppercase letters
-  for (let token of tokens) {
-    if (/^[A-Z]$/.test(token)) {
-      continue; // Valid variable
-    } else if (operators.includes(token.toUpperCase()) || token === '(' || token === ')') {
-      continue; // Valid operator or parenthesis
-    } else {
-      return { valid: false, message: `Invalid token "${token}" in the formula.` };
-    }
-  }
-
-  // Ensure that the formula does not end with an operator
-  const lastToken = tokens[tokens.length - 1].toUpperCase();
-  if (operators.includes(lastToken)) {
-    return { valid: false, message: 'Formula cannot end with an operator.' };
-  }
-
-  // Check for proper operator-operand sequence
-  let expectOperand = true;
-  for (let i = 0; i < tokens.length; i++) {
-    const token = tokens[i].toUpperCase();
-    if (operators.includes(token)) {
-      if (token === 'NOT') {
-        expectOperand = true; // Unary operator expects an operand
-      } else {
-        expectOperand = true; // Binary operator expects an operand next
-      }
-    } else if (/^[A-Z]$/.test(token)) {
-      if (!expectOperand) {
-        return { valid: false, message: `Unexpected operand "${token}" at position ${i + 1}` };
-      }
-      expectOperand = false;
-    } else if (token === '(') {
-      expectOperand = true;
-    } else if (token === ')') {
-      expectOperand = false;
-    }
-  }
-
-  return { valid: true };
 };
 
 // Main function to create the truth table
 export const createTruthTable = (formula) => {
-  // Normalize the formula: remove extra spaces
-  const normalizedFormula = formula.replace(/\s+/g, ' ').trim();
-
   // Validate formula syntax
-  const validation = validateFormula(normalizedFormula);
+  const validation = validateFormula(formula);
   if (!validation.valid) {
     throw new Error(validation.message);
   }
 
-  // Extract subformulas
-  const subformulas = extractSubformulas(normalizedFormula);
+  // Normalize formula for processing
+  const normalizedFormula = normalizeOperators(formula);
 
-  // Replace operator words and symbols with symbols for display
-  const symbolizedSubformulas = subformulas.map((sub) => replaceOperatorsWithSymbols(sub));
-  const symbolizedFormula = replaceOperatorsWithSymbols(normalizedFormula);
-
-  // Extract unique variables from the formula (single uppercase letters)
-  const variablesMatch = normalizedFormula.match(/\b[A-Z]\b/g);
-  const variables = variablesMatch ? Array.from(new Set(variablesMatch)).sort() : [];
+  // Extract variables (single uppercase letters)
+  const variables = Array.from(new Set(normalizedFormula.match(/\b[A-Z]\b/g))).sort();
 
   if (variables.length === 0) {
     throw new Error('No variables found in the formula.');
   }
 
-  // Define headers: variables, subformulas, and the main formula
-  const headers = [...variables, ...symbolizedSubformulas, symbolizedFormula];
+  // Prepare headers
+  const displayedFormula = replaceOperatorsWithSymbols(formula);
+  const headers = [...variables, displayedFormula];
 
-  // Remove any empty headers (if symbolizedFormula is empty)
-  const filteredHeaders = headers.filter((header) => header.trim() !== '');
-
+  // Generate truth table
   const numRows = Math.pow(2, variables.length);
   const table = [];
 
@@ -213,34 +130,23 @@ export const createTruthTable = (formula) => {
     const row = {};
     const binary = i.toString(2).padStart(variables.length, '0');
 
-    // Assign truth values to variables as 1 and 0
+    // Assign truth values to variables
     variables.forEach((variable, index) => {
-      row[variable] = binary[index] === '1' ? 1 : 0;
+      const value = binary[index] === '1';
+      row[variable] = value ? 1 : 0;
     });
 
-    // Evaluate subformulas
-    subformulas.forEach((subformula, index) => {
-      const symbolizedSub = symbolizedSubformulas[index];
-      const expr = prepareExpression(subformula, row);
-      try {
-        const result = math.evaluate(expr);
-        row[symbolizedSub] = result ? 1 : 0;
-      } catch (error) {
-        row[symbolizedSub] = 'Error';
-      }
-    });
-
-    // Evaluate the main formula
-    const mainExpr = prepareExpression(normalizedFormula, row);
+    // Evaluate the formula
+    const expr = prepareExpression(formula, row);
     try {
-      const mainResult = math.evaluate(mainExpr);
-      row[symbolizedFormula] = mainResult ? 1 : 0;
+      const result = math.evaluate(expr);
+      row[displayedFormula] = result ? 1 : 0;
     } catch (error) {
-      row[symbolizedFormula] = 'Error';
+      row[displayedFormula] = 'Error';
     }
 
     table.push(row);
   }
 
-  return { headers: filteredHeaders, table };
+  return { headers, table };
 };

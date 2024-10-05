@@ -1,7 +1,7 @@
 // screens/TruthTableResultScreen.js
 
 import React, { useRef } from 'react';
-import { StyleSheet, ScrollView, SafeAreaView, Dimensions, View } from 'react-native';
+import { StyleSheet, ScrollView, SafeAreaView, Dimensions } from 'react-native';
 import { Text, DataTable, useTheme, Button } from 'react-native-paper';
 import * as Animatable from 'react-native-animatable';
 
