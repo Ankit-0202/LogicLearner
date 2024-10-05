@@ -3,7 +3,7 @@
 # Project Variables
 APP_NAME = LogicLearner
 IOS_SCHEME = LogicLearner
-ANDROID_APP_ID = org.reactjs.native.example.LogicLearner
+ANDROID_APP_ID = org.LogicLearner
 
 # Colors for output
 GREEN = \033[0;32m
