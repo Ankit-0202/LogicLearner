@@ -1,8 +1,24 @@
 // screens/TruthTableScreen.js
 
 import React, { useState } from 'react';
-import { StyleSheet, ScrollView, SafeAreaView, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
-import { Text, ActivityIndicator, useTheme, Snackbar, Button, TextInput } from 'react-native-paper';
+import {
+  StyleSheet,
+  ScrollView,
+  SafeAreaView,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
+  View,
+} from 'react-native';
+import {
+  Text,
+  ActivityIndicator,
+  useTheme,
+  Snackbar,
+  Button,
+  TextInput,
+} from 'react-native-paper';
 import * as Animatable from 'react-native-animatable';
 import { createTruthTable } from '../utils/truthTableGenerator';
 
@@ -11,12 +27,37 @@ const TruthTableScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [visible, setVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [formulaError, setFormulaError] = useState('');
 
   const { colors } = useTheme();
 
+  // Function to handle real-time formula validation
+  const handleFormulaChange = (input) => {
+    setFormula(input);
+
+    // Attempt to validate the formula
+    try {
+      const { valid, message } = validateFormula(input);
+      if (!valid) {
+        setFormulaError(message);
+      } else {
+        setFormulaError('');
+      }
+    } catch (err) {
+      setFormulaError('Invalid formula.');
+    }
+  };
+
+  // Function to handle formula submission
   const handleGenerate = () => {
     if (!formula.trim()) {
       setSnackbarMessage('Please enter a propositional logic formula.');
+      setVisible(true);
+      return;
+    }
+
+    if (formulaError) {
+      setSnackbarMessage('Please fix the errors in the formula before generating the truth table.');
       setVisible(true);
       return;
     }
@@ -43,8 +84,8 @@ const TruthTableScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <KeyboardAvoidingView 
-          style={styles.innerContainer} 
+        <KeyboardAvoidingView
+          style={styles.innerContainer}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
           <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -57,21 +98,27 @@ const TruthTableScreen = ({ navigation }) => {
                 label="Propositional Formula"
                 placeholder="e.g., A AND (B OR C)"
                 value={formula}
-                onChangeText={setFormula}
+                onChangeText={handleFormulaChange}
                 mode="outlined"
                 style={styles.input}
                 autoCapitalize="characters"
                 left={<TextInput.Icon name="math-compass" />}
+                accessibilityLabel="Propositional Formula Input"
+                error={formulaError !== ''}
               />
-              <Button 
-                mode="contained" 
-                onPress={handleGenerate} 
+              {formulaError !== '' && (
+                <Text style={styles.errorTextInline}>{formulaError}</Text>
+              )}
+              <Button
+                mode="contained"
+                onPress={handleGenerate}
                 style={styles.button}
                 icon="table"
                 contentStyle={styles.buttonContent}
                 labelStyle={styles.buttonLabel}
                 animated
                 uppercase={false}
+                disabled={formulaError !== '' || !formula.trim()}
               >
                 Generate Truth Table
               </Button>
@@ -120,6 +167,66 @@ const TruthTableScreen = ({ navigation }) => {
   );
 };
 
+// Function to validate the formula syntax
+const validateFormula = (formula) => {
+  // Normalize the formula: remove extra spaces
+  const normalizedFormula = formula.replace(/\s+/g, ' ').trim();
+
+  // Check for balanced parentheses
+  let stack = [];
+  for (let i = 0; i < normalizedFormula.length; i++) {
+    if (normalizedFormula[i] === '(') {
+      stack.push(i);
+    } else if (normalizedFormula[i] === ')') {
+      if (stack.length === 0) {
+        return { valid: false, message: `Unmatched closing parenthesis at position ${i + 1}` };
+      }
+      stack.pop();
+    }
+  }
+  if (stack.length > 0) {
+    return { valid: false, message: `Unmatched opening parenthesis at position ${stack.pop() + 1}` };
+  }
+
+  // Tokenize the formula
+  const tokens = normalizedFormula.match(/(\b[A-Z]\b|AND|OR|NOT|IMPLIES|IFF|XOR|&|\||~|->|<->|\(|\))/gi);
+  if (!tokens) {
+    return { valid: false, message: 'No valid tokens found in the formula.' };
+  }
+
+  // Define operators
+  const operators = ['AND', 'OR', 'NOT', 'IMPLIES', 'IFF', 'XOR', '&', '|', '~', '->', '<->'];
+
+  let expectOperand = true;
+
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i].toUpperCase();
+    if (operators.includes(token)) {
+      if (token === 'NOT' || token === '~') {
+        // Unary operator expects an operand next
+        expectOperand = true;
+      } else {
+        // Binary operator expects an operand next
+        expectOperand = true;
+      }
+    } else if (/^[A-Z]$/.test(token)) {
+      // Operand
+      if (!expectOperand) {
+        return { valid: false, message: `Unexpected operand "${token}" at token ${i + 1}` };
+      }
+      expectOperand = false;
+    } else {
+      return { valid: false, message: `Invalid token "${token}" at token ${i + 1}` };
+    }
+  }
+
+  if (expectOperand) {
+    return { valid: false, message: 'Formula cannot end with an operator.' };
+  }
+
+  return { valid: true };
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -150,7 +257,14 @@ const styles = StyleSheet.create({
   },
   input: {
     width: '100%',
-    marginBottom: 20,
+    marginBottom: 8,
+  },
+  errorTextInline: {
+    alignSelf: 'flex-start',
+    marginLeft: 12,
+    marginBottom: 8,
+    color: '#B00020',
+    fontSize: 14,
   },
   button: {
     width: '100%',
