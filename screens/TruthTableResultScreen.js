@@ -50,9 +50,12 @@ const TruthTableResultScreen = ({ route, navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Outer ScrollView for vertical scrolling */}
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* Header ScrollView */}
+      {/* Outer container for vertical scrolling */}
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={true}
+      >
+        {/* Fixed header that stays on top */}
         <View style={styles.fixedHeader}>
           <ScrollView
             horizontal={true}
@@ -77,13 +80,14 @@ const TruthTableResultScreen = ({ route, navigation }) => {
           </ScrollView>
         </View>
 
-        {/* Body ScrollView */}
+        {/* Scrollable table body */}
         <ScrollView
           horizontal={true}
           ref={bodyScrollRef}
           onScroll={handleBodyScroll}
           scrollEventThrottle={16}
           showsHorizontalScrollIndicator={true}
+          style={styles.bodyScroll}
         >
           <Animatable.View animation="fadeIn" duration={1000} style={styles.tableContainer}>
             <DataTable>
@@ -130,18 +134,18 @@ const TruthTableResultScreen = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff', // Adjust based on theme
+    backgroundColor: '#fff',
   },
   scrollContainer: {
-    paddingBottom: 100, // Ensure there's enough space at the bottom
+    paddingBottom: 100, // Ensure enough space at the bottom
   },
   fixedHeader: {
-    zIndex: 10, // Ensure the header stays on top
-    backgroundColor: '#fff', // To avoid overlap issues with scroll
-    elevation: 2, // Adds shadow for iOS/Android
+    zIndex: 10, // Keep header on top
+    backgroundColor: '#fff',
+    elevation: 2, // Shadow effect for header
   },
   header: {
-    paddingVertical: 5, // Add some padding for better readability
+    paddingVertical: 5,
   },
   dataHeader: {
     justifyContent: 'center',
@@ -151,7 +155,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 12,
-    minWidth: 120, // Adjust based on expected content size
+    minWidth: 120, // Minimum width for columns
+    flex: 1, // Adjust width dynamically
   },
   headerText: {
     fontWeight: 'bold',
@@ -162,11 +167,15 @@ const styles = StyleSheet.create({
     marginTop: 0,
     paddingVertical: 10,
   },
+  bodyScroll: {
+    marginTop: 0,
+  },
   cell: {
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 12,
-    minWidth: 120, // Ensure columns are wide enough for content
+    minWidth: 120, // Minimum width for columns
+    flex: 1, // Adjust width dynamically
   },
   cellText: {
     textAlign: 'center',
