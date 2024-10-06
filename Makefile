@@ -1,5 +1,3 @@
-# Makefile for LogicLearner React Native Project
-
 # Project Variables
 APP_NAME = LogicLearner
 IOS_SCHEME = LogicLearner
