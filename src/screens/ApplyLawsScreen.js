@@ -23,8 +23,9 @@ import {
   HelperText,
 } from 'react-native-paper';
 import * as Animatable from 'react-native-animatable';
+import RNFS from 'react-native-fs';
+import Share from 'react-native-share';
 
-// Import utilities from logicalUtils.js
 import {
   VERUM,
   FALSUM,
@@ -206,6 +207,50 @@ const ApplyLawsScreen = () => {
     }
   };
 
+  // Function to generate CSV content from steps
+  const generateCSV = () => {
+    const header = ['Step', 'Formula', 'Applied Law'];
+    const rows = steps.map((step, index) => [
+      index + 1,
+      `"${step.formula}"`, // Encapsulate in quotes to handle commas within formulas
+      `"${step.rule}"`,
+    ]);
+    const csvContent = [header, ...rows].map((e) => e.join(',')).join('\n');
+    return csvContent;
+  };
+
+  // Function to handle CSV download and sharing
+  const handleDownloadCSV = async () => {
+    if (steps.length === 0) {
+      setSnackbarMessage('No steps to export.');
+      setVisible(true);
+      return;
+    }
+
+    const csv = generateCSV();
+    const path = `${RNFS.DocumentDirectoryPath}/LogicalSteps.csv`;
+
+    try {
+      // Write the CSV string to a file
+      await RNFS.writeFile(path, csv, 'utf8');
+      console.log('CSV file written to:', path);
+
+      // Share the file
+      const shareOptions = {
+        title: 'Share Logical Steps',
+        url: `file://${path}`,
+        type: 'text/csv',
+        filename: 'LogicalSteps', // for iOS
+      };
+
+      await Share.open(shareOptions);
+    } catch (error) {
+      console.error('Error generating or sharing CSV:', error);
+      setSnackbarMessage('Failed to export CSV.');
+      setVisible(true);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -240,6 +285,23 @@ const ApplyLawsScreen = () => {
                   )}
                   keyExtractor={(item, index) => index.toString()}
                 />
+              </Animatable.View>
+            )}
+
+            {/* Download CSV Button */}
+            {steps.length > 0 && (
+              <Animatable.View animation="fadeInUp" duration={1000} style={styles.downloadButtonContainer}>
+                <Button
+                  mode="outlined"
+                  onPress={handleDownloadCSV}
+                  style={styles.downloadButton}
+                  contentStyle={styles.buttonContent}
+                  labelStyle={styles.buttonLabel}
+                  uppercase={false}
+                  icon="download"
+                >
+                  Download as CSV
+                </Button>
               </Animatable.View>
             )}
 
@@ -419,23 +481,13 @@ const styles = StyleSheet.create({
   tableCellLast: {
     borderRightWidth: 0,
   },
-  stepsContainer: {
-    // Removed as tableContainer now handles steps display
+  downloadButtonContainer: {
+    marginBottom: 20,
+    alignItems: 'center',
   },
-  stepRow: {
-    // Removed as tableContainer now handles steps display
-  },
-  stepIndex: {
-    // Removed as tableContainer now handles steps display
-  },
-  stepContent: {
-    // Removed as tableContainer now handles steps display
-  },
-  stepFormula: {
-    // Removed as tableContainer now handles steps display
-  },
-  stepRule: {
-    // Removed as tableContainer now handles steps display
+  downloadButton: {
+    width: '60%',
+    borderRadius: 8,
   },
   inputContainer: {
     marginBottom: 20,
