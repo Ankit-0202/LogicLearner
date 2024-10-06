@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { StyleSheet, View, SafeAreaView } from 'react-native';
-import { Button, Title, useTheme } from 'react-native-paper';
+import { Button, Title, FAB, useTheme } from 'react-native-paper';
 import * as Animatable from 'react-native-animatable';
 
 const HomeScreen = ({ navigation }) => {
@@ -39,6 +39,7 @@ const HomeScreen = ({ navigation }) => {
           >
             Check Equivalence
           </Button>
+          
           <Button
             mode="contained"
             onPress={() => navigation.navigate('ApplyLaws')}
@@ -53,6 +54,17 @@ const HomeScreen = ({ navigation }) => {
           </Button>
         </View>
       </Animatable.View>
+
+      {/* Floating Action Button (FAB) for XKCD */}
+      <FAB
+        style={styles.fab}
+        small={false}
+        icon="cards" // Choose an appropriate icon from MaterialCommunityIcons
+        label="XKCD Comics"
+        onPress={() => navigation.navigate('XKCD')}
+        accessibilityLabel="Navigate to XKCD Comics"
+        accessibilityHint="Opens the XKCD comics screen to view comics"
+      />
     </SafeAreaView>
   );
 };
@@ -88,6 +100,13 @@ const styles = StyleSheet.create({
   },
   buttonLabel: {
     fontSize: 18,
+  },
+  fab: {
+    position: 'absolute',
+    margin: 16,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#6200ee', // Adjust based on your theme
   },
 });
 
