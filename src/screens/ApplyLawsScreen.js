@@ -21,7 +21,6 @@ import {
   useTheme,
   Snackbar,
   HelperText,
-  Card,
 } from 'react-native-paper';
 import * as Animatable from 'react-native-animatable';
 
@@ -33,22 +32,6 @@ import {
   normalizeSymbols,
   replaceSymbolsWithLogicalSymbols,
   validateFormula,
-  compareASTs,
-  isNot,
-  isLogicalOperator,
-  isLiteral,
-  checkDoubleNegation,
-  checkDeMorgan,
-  checkCommutative,
-  checkAssociative,
-  checkDistributive,
-  checkIdempotent,
-  checkExcludedMiddle,
-  checkNonContradiction,
-  checkIdentity,
-  checkDomination,
-  checkImplicationContrapositive,
-  checkImplicationAsDisjunction,
 } from '../utils/logicalUtils';
 
 const ApplyLawsScreen = () => {
@@ -68,6 +51,32 @@ const ApplyLawsScreen = () => {
   // Dropdown state
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const dropdownAnim = useRef(new Animated.Value(0)).current; // For smooth dropdown animation
+
+  // Handle real-time formula validation for initial formula
+  const handleInitialFormulaChange = (input) => {
+    setInitialFormula(input);
+
+    // Attempt to validate the formula
+    const { valid, message } = validateFormula(input);
+    if (!valid) {
+      setFormulaError(message);
+    } else {
+      setFormulaError('');
+    }
+  };
+
+  // Handle real-time formula validation for new formula
+  const handleNextFormulaChange = (input) => {
+    setNextFormula(input);
+
+    // Attempt to validate the formula
+    const { valid, message } = validateFormula(input);
+    if (!valid) {
+      setFormulaError(message);
+    } else {
+      setFormulaError('');
+    }
+  };
 
   // Handle setting the initial formula
   const handleSetInitialFormula = () => {
@@ -112,66 +121,19 @@ const ApplyLawsScreen = () => {
       setFormulaError('');
     }
 
-    // Check if the rule is applied correctly
-    const isValidTransformation = applyRule(steps[steps.length - 1].formula, normalizedNextFormula, selectedRule);
-
-    if (isValidTransformation) {
-      setSteps([
-        ...steps,
-        { formula: replaceSymbolsWithLogicalSymbols(normalizedNextFormula), rule: selectedRuleLabel() },
-      ]);
-      setNextFormula('');
-      setSelectedRule('');
-    } else {
-      setSnackbarMessage('Incorrect application of the selected rule.');
-      setVisible(true);
-    }
+    // Since we're not verifying the rule application, just add the step
+    setSteps([
+      ...steps,
+      { formula: replaceSymbolsWithLogicalSymbols(normalizedNextFormula), rule: selectedRuleLabel() },
+    ]);
+    setNextFormula('');
+    setSelectedRule('');
   };
 
   // Get the label of the selected rule
   const selectedRuleLabel = () => {
     const rule = rulesList.find((r) => r.value === selectedRule);
     return rule ? rule.label : '';
-  };
-
-  // Apply and verify the selected rule
-  const applyRule = (fromFormula, toFormula, rule) => {
-    try {
-      const fromAST = jsep(fromFormula);
-      const toAST = jsep(toFormula);
-
-      switch (rule) {
-        case 'double_negation':
-          return checkDoubleNegation(fromAST, toAST);
-        case 'de_morgan':
-          return checkDeMorgan(fromAST, toAST);
-        case 'commutative':
-          return checkCommutative(fromAST, toAST);
-        case 'associative':
-          return checkAssociative(fromAST, toAST);
-        case 'distributive':
-          return checkDistributive(fromAST, toAST);
-        case 'idempotent':
-          return checkIdempotent(fromAST, toAST);
-        case 'excluded_middle':
-          return checkExcludedMiddle(fromAST, toAST);
-        case 'non_contradiction':
-          return checkNonContradiction(fromAST, toAST);
-        case 'identity':
-          return checkIdentity(fromAST, toAST);
-        case 'domination':
-          return checkDomination(fromAST, toAST);
-        case 'implication_contrapositive':
-          return checkImplicationContrapositive(fromAST, toAST);
-        case 'implication_disjunction':
-          return checkImplicationAsDisjunction(fromAST, toAST);
-        default:
-          return false;
-      }
-    } catch (error) {
-      console.error(error);
-      return false;
-    }
   };
 
   // Toggle Dropdown Visibility with Animation
@@ -214,21 +176,21 @@ const ApplyLawsScreen = () => {
       case 'de_morgan':
         return '¬(A ∧ B) ≡ ¬A ∨ ¬B';
       case 'commutative':
-        return 'A ∧ B ≡ B ∧ A \nA ∨ B ≡ B ∨ A';
+        return 'A ∧ B ≡ B ∧ A\nA ∨ B ≡ B ∨ A';
       case 'associative':
-        return '(A ∧ B) ∧ C ≡ A ∧ (B ∧ C) \n(A ∨ B) ∨ C ≡ A ∨ (B ∨ C)';
+        return '(A ∧ B) ∧ C ≡ A ∧ (B ∧ C)\n(A ∨ B) ∨ C ≡ A ∨ (B ∨ C)';
       case 'distributive':
-        return 'A ∧ (B ∨ C) ≡ (A ∧ B) ∨ (A ∧ C) \nA ∨ (B ∧ C) ≡ (A ∨ B) ∧ (A ∨ C)';
+        return 'A ∧ (B ∨ C) ≡ (A ∧ B) ∨ (A ∧ C)\nA ∨ (B ∧ C) ≡ (A ∨ B) ∧ (A ∨ C)';
       case 'idempotent':
-        return 'A ∧ A ≡ A \nA ∨ A ≡ A';
+        return 'A ∧ A ≡ A\nA ∨ A ≡ A';
       case 'excluded_middle':
         return 'A ∨ ¬A ≡ ⊤';
       case 'non_contradiction':
         return 'A ∧ ¬A ≡ ⊥';
       case 'identity':
-        return 'A ∧ ⊤ ≡ A \nA ∨ ⊥ ≡ A';
+        return 'A ∧ ⊤ ≡ A\nA ∨ ⊥ ≡ A';
       case 'domination':
-        return 'A ∧ ⊥ ≡ ⊥ \nA ∨ ⊤ ≡ ⊤';
+        return 'A ∧ ⊥ ≡ ⊥\nA ∨ ⊤ ≡ ⊤';
       case 'implication_contrapositive':
         return 'A → B ≡ ¬B → ¬A';
       case 'implication_disjunction':
@@ -273,7 +235,7 @@ const ApplyLawsScreen = () => {
                     label="Initial Formula"
                     placeholder="Enter the initial formula (e.g., A ∧ B)"
                     value={initialFormula}
-                    onChangeText={setInitialFormula}
+                    onChangeText={handleInitialFormulaChange}
                     mode="outlined"
                     style={styles.input}
                     autoCapitalize="characters"
@@ -291,7 +253,7 @@ const ApplyLawsScreen = () => {
                     contentStyle={styles.buttonContent}
                     labelStyle={styles.buttonLabel}
                     uppercase={false}
-                    disabled={!initialFormula.trim()}
+                    disabled={!initialFormula.trim() || formulaError !== ''}
                   >
                     Set Initial Formula
                   </Button>
@@ -306,10 +268,11 @@ const ApplyLawsScreen = () => {
                     label="New Formula"
                     placeholder="Enter the new formula"
                     value={nextFormula}
-                    onChangeText={setNextFormula}
+                    onChangeText={handleNextFormulaChange}
                     mode="outlined"
                     style={styles.input}
                     autoCapitalize="characters"
+                    error={formulaError !== ''}
                   />
                   {formulaError !== '' && (
                     <HelperText type="error" visible={true}>
@@ -358,7 +321,7 @@ const ApplyLawsScreen = () => {
                     contentStyle={styles.buttonContent}
                     labelStyle={styles.buttonLabel}
                     uppercase={false}
-                    disabled={!nextFormula.trim() || !selectedRule}
+                    disabled={!nextFormula.trim() || !selectedRule || formulaError !== ''}
                   >
                     Apply Rule
                   </Button>
