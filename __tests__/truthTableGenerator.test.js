@@ -1,6 +1,6 @@
 // __tests__/truthTableGenerator.test.js
 
-import { createTruthTable } from '../utils/truthTableGenerator';
+import { createTruthTable } from '../src/utils/truthTableGenerator';
 
 describe('createTruthTable', () => {
   test('generates correct truth table for A AND B', () => {

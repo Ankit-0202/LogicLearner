@@ -6,13 +6,13 @@ import { createStackNavigator } from '@react-navigation/stack';
 
 import { ThemeProvider } from './contexts/ThemeContext';
 
-import HomeScreen from './screens/HomeScreen';
-import TruthTableScreen from './screens/TruthTableScreen';
-import TruthTableResultScreen from './screens/TruthTableResultScreen';
-import InstructionsScreen from './screens/InstructionsScreen';
-import EquivalenceRulesScreen from './screens/EquivalenceRulesScreen';
-import EquivalenceScreen from './screens/EquivalenceScreen';
-import ApplyLawsScreen from './screens/ApplyLawsScreen'; // Import the new screen
+import HomeScreen from './src/screens/HomeScreen';
+import TruthTableScreen from './src/screens/TruthTableScreen';
+import TruthTableResultScreen from './src/screens/TruthTableResultScreen';
+import InstructionsScreen from './src/screens/InstructionsScreen';
+import EquivalenceRulesScreen from './src/screens/EquivalenceRulesScreen';
+import EquivalenceScreen from './src/screens/EquivalenceScreen';
+import ApplyLawsScreen from './src/screens/ApplyLawsScreen';
 
 const Stack = createStackNavigator();
 
