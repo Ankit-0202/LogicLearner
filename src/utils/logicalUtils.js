@@ -41,11 +41,11 @@ export const rulesList = [
 export const normalizeSymbols = (formula) => {
   return formula
     .replace(/¬/g, 'not')
-    .replace(/~(?=\s|$)/g, 'not') // Replace ~ with not only if followed by space or end
-    .replace(/\|/g, 'or')
-    .replace(/&/g, 'and')
-    .replace(/→/g, 'implies')
-    .replace(/↔/g, 'iff')
+    .replace(/~(?=\s|$)/g, 'not ') // Replace ~ with not only if followed by space or end
+    .replace(/\|/g, ' or ')
+    .replace(/&/g, ' and ')
+    .replace(/→/g, ' implies ')
+    .replace(/↔/g, ' iff ')
     .replace(new RegExp(VERUM, 'g'), '⊤') // Ensure verum is preserved
     .replace(new RegExp(FALSUM, 'g'), '⊥'); // Ensure falsum is preserved
 };
@@ -59,14 +59,19 @@ export const normalizeSymbols = (formula) => {
  */
 export const replaceSymbolsWithLogicalSymbols = (formula) => {
   return formula
-    .replace(/\band\b/g, '∧')
-    .replace(/\bor\b/g, '∨')
-    .replace(/\bnot\b/g, '¬')
-    .replace(/\bimplies\b/g, '→')
-    .replace(/\biff\b/g, '↔')
-    .replace(/⊤/g, VERUM)
-    .replace(/⊥/g, FALSUM);
+    .replace(/\|/g, '∨') // Replace '|' with '∨' (disjunction)
+    .replace(/&/g, '∧') // Replace '&' with '∧' (conjunction)
+    .replace(/~/g, '¬') // Replace '~' with '¬' (negation)
+    .replace(/!/g, '¬') // Replace '!' with '¬' (negation)
+    .replace(/\bnot\b/gi, '¬') // Replace 'not' with '¬'
+    .replace(/\band\b/gi, '∧') // Replace 'and' with '∧'
+    .replace(/\bor\b/gi, '∨') // Replace 'or' with '∨'
+    .replace(/\bimplies\b/gi, '→') // Replace 'implies' with '→'
+    .replace(/\biff\b/gi, '↔') // Replace 'iff' with '↔'
+    .replace(/⊤/g, VERUM) // Ensure verum is preserved
+    .replace(/⊥/g, FALSUM); // Ensure falsum is preserved
 };
+
 
 /**
  * Validate formula using jsep parser.

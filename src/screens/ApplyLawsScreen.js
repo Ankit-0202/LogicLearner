@@ -94,8 +94,11 @@ const ApplyLawsScreen = () => {
       setFormulaError('');
     }
 
+    // Apply symbol replacements
+    const formattedFormula = replaceSymbolsWithLogicalSymbols(normalizedFormula);
+
     setInitialFormulaSet(true);
-    setSteps([{ formula: replaceSymbolsWithLogicalSymbols(normalizedFormula), rule: 'Initial Formula' }]);
+    setSteps([{ formula: formattedFormula, rule: 'Initial Formula' }]);
   };
 
   // Handle applying a rule
@@ -121,10 +124,13 @@ const ApplyLawsScreen = () => {
       setFormulaError('');
     }
 
+    // Apply symbol replacements
+    const formattedNextFormula = replaceSymbolsWithLogicalSymbols(normalizedNextFormula);
+
     // Since we're not verifying the rule application, just add the step
     setSteps([
       ...steps,
-      { formula: replaceSymbolsWithLogicalSymbols(normalizedNextFormula), rule: selectedRuleLabel() },
+      { formula: formattedNextFormula, rule: selectedRuleLabel() },
     ]);
     setNextFormula('');
     setSelectedRule('');
