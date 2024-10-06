@@ -21,6 +21,7 @@ import {
   useTheme,
   Snackbar,
   HelperText,
+  ActivityIndicator,
 } from 'react-native-paper';
 import * as Animatable from 'react-native-animatable';
 import RNFS from 'react-native-fs';
@@ -52,6 +53,9 @@ const ApplyLawsScreen = () => {
   // Dropdown state
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const dropdownAnim = useRef(new Animated.Value(0)).current; // For smooth dropdown animation
+
+  // Loading state for CSV sharing
+  const [isSharing, setIsSharing] = useState(false);
 
   // Handle real-time formula validation for initial formula
   const handleInitialFormulaChange = (input) => {
@@ -227,6 +231,8 @@ const ApplyLawsScreen = () => {
       return;
     }
 
+    setIsSharing(true);
+
     const csv = generateCSV();
     const path = `${RNFS.DocumentDirectoryPath}/LogicalSteps.csv`;
 
@@ -244,10 +250,16 @@ const ApplyLawsScreen = () => {
       };
 
       await Share.open(shareOptions);
+
+      // Optionally delete the file after sharing
+      // await RNFS.unlink(path);
+      // console.log('CSV file deleted from:', path);
     } catch (error) {
       console.error('Error generating or sharing CSV:', error);
       setSnackbarMessage('Failed to export CSV.');
       setVisible(true);
+    } finally {
+      setIsSharing(false);
     }
   };
 
@@ -268,9 +280,9 @@ const ApplyLawsScreen = () => {
               <Animatable.View animation="fadeIn" duration={1200} style={styles.tableContainer}>
                 {/* Table Header */}
                 <View style={[styles.tableRow, styles.tableHeader]}>
-                  <Text style={[styles.tableCell, styles.tableHeaderText]}>Step</Text>
-                  <Text style={[styles.tableCell, styles.tableHeaderText]}>Formula</Text>
-                  <Text style={[styles.tableCell, styles.tableHeaderText]}>Applied Law</Text>
+                  <Text style={[styles.tableCellStep, styles.tableHeaderText]}>Step</Text>
+                  <Text style={[styles.tableCellFormula, styles.tableHeaderText]}>Formula</Text>
+                  <Text style={[styles.tableCellRule, styles.tableHeaderText]}>Applied Law</Text>
                 </View>
 
                 {/* Table Rows */}
@@ -278,9 +290,9 @@ const ApplyLawsScreen = () => {
                   data={steps}
                   renderItem={({ item, index }) => (
                     <View style={styles.tableRow} key={index}>
-                      <Text style={styles.tableCell}>{index + 1}</Text>
-                      <Text style={styles.tableCell}>{item.formula}</Text>
-                      <Text style={styles.tableCell}>{item.rule}</Text>
+                      <Text style={styles.tableCellStep}>{index + 1}</Text>
+                      <Text style={styles.tableCellFormula}>{item.formula}</Text>
+                      <Text style={styles.tableCellRule}>{item.rule}</Text>
                     </View>
                   )}
                   keyExtractor={(item, index) => index.toString()}
@@ -299,10 +311,21 @@ const ApplyLawsScreen = () => {
                   labelStyle={styles.buttonLabel}
                   uppercase={false}
                   icon="download"
+                  accessibilityLabel="Download Steps as CSV"
+                  accessibilityHint="Downloads the steps table as a CSV file which can be shared via various platforms."
+                  disabled={isSharing}
                 >
                   Download as CSV
                 </Button>
               </Animatable.View>
+            )}
+
+            {/* Display Loading Indicator When Sharing */}
+            {isSharing && (
+              <View style={styles.loader}>
+                <ActivityIndicator animating={true} color={colors.primary} size="large" />
+                <Text style={[styles.loaderText, { color: colors.text }]}>Preparing CSV...</Text>
+              </View>
             )}
 
             {/* Input Fields */}
@@ -470,16 +493,27 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
-  tableCell: {
-    flex: 1,
+  tableCellStep: {
+    flex: 0.8, // Slightly narrower
     padding: 10,
     borderRightWidth: 1,
     borderRightColor: '#ccc',
     textAlign: 'center',
     fontSize: 16,
   },
-  tableCellLast: {
-    borderRightWidth: 0,
+  tableCellFormula: {
+    flex: 2, // Wider
+    padding: 10,
+    borderRightWidth: 1,
+    borderRightColor: '#ccc',
+    textAlign: 'center',
+    fontSize: 16,
+  },
+  tableCellRule: {
+    flex: 2, // Wider
+    padding: 10,
+    textAlign: 'center',
+    fontSize: 16,
   },
   downloadButtonContainer: {
     marginBottom: 20,
@@ -556,6 +590,23 @@ const styles = StyleSheet.create({
   },
   buttonLabel: {
     fontSize: 16,
+  },
+  loader: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -75 }, { translateY: -50 }],
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    padding: 20,
+    borderRadius: 10,
+  },
+  loaderText: {
+    marginTop: 10,
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#fff',
   },
 });
 
