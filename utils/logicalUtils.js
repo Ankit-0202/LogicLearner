@@ -294,8 +294,8 @@ export const checkExcludedMiddle = (fromAST, toAST) => {
   // A ∨ ¬A ≡ ⊤
   if (
     isLogicalOperator(fromAST, 'or') &&
-    ((compareASTs(fromAST.left, toAST) && isNot(fromAST.right)) ||
-      (compareASTs(fromAST.right, toAST) && isNot(fromAST.left)))
+    ((isNot(fromAST.left) && compareASTs(fromAST.right, toAST)) ||
+      (isNot(fromAST.right) && compareASTs(fromAST.left, toAST)))
   ) {
     return true;
   }

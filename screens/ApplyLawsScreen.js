@@ -1,6 +1,6 @@
 // screens/ApplyLawsScreen.js
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   StyleSheet,
   ScrollView,
@@ -10,6 +10,9 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
+  TouchableOpacity,
+  Animated,
+  FlatList,
 } from 'react-native';
 import {
   Text,
@@ -18,6 +21,7 @@ import {
   useTheme,
   Snackbar,
   HelperText,
+  Card,
 } from 'react-native-paper';
 import * as Animatable from 'react-native-animatable';
 
@@ -60,6 +64,10 @@ const ApplyLawsScreen = () => {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [visible, setVisible] = useState(false);
   const [formulaError, setFormulaError] = useState('');
+
+  // Dropdown state
+  const [dropdownVisible, setDropdownVisible] = useState(false);
+  const dropdownAnim = useRef(new Animated.Value(0)).current; // For smooth dropdown animation
 
   // Handle setting the initial formula
   const handleSetInitialFormula = () => {
@@ -166,6 +174,70 @@ const ApplyLawsScreen = () => {
     }
   };
 
+  // Toggle Dropdown Visibility with Animation
+  const toggleDropdown = () => {
+    if (dropdownVisible) {
+      Animated.timing(dropdownAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => setDropdownVisible(false));
+    } else {
+      setDropdownVisible(true);
+      Animated.timing(dropdownAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
+  };
+
+  // Render each rule in the dropdown table
+  const renderRule = ({ item }) => (
+    <TouchableOpacity
+      style={styles.ruleRow}
+      onPress={() => {
+        setSelectedRule(item.value);
+        toggleDropdown();
+      }}
+    >
+      <Text style={styles.ruleName}>{item.label}</Text>
+      <Text style={styles.ruleLogic}>{getRuleLogic(item.value)}</Text>
+    </TouchableOpacity>
+  );
+
+  // Function to get the logical rule expression based on the rule value
+  const getRuleLogic = (ruleValue) => {
+    switch (ruleValue) {
+      case 'double_negation':
+        return '¬¬A ≡ A';
+      case 'de_morgan':
+        return '¬(A ∧ B) ≡ ¬A ∨ ¬B';
+      case 'commutative':
+        return 'A ∧ B ≡ B ∧ A \nA ∨ B ≡ B ∨ A';
+      case 'associative':
+        return '(A ∧ B) ∧ C ≡ A ∧ (B ∧ C) \n(A ∨ B) ∨ C ≡ A ∨ (B ∨ C)';
+      case 'distributive':
+        return 'A ∧ (B ∨ C) ≡ (A ∧ B) ∨ (A ∧ C) \nA ∨ (B ∧ C) ≡ (A ∨ B) ∧ (A ∨ C)';
+      case 'idempotent':
+        return 'A ∧ A ≡ A \nA ∨ A ≡ A';
+      case 'excluded_middle':
+        return 'A ∨ ¬A ≡ ⊤';
+      case 'non_contradiction':
+        return 'A ∧ ¬A ≡ ⊥';
+      case 'identity':
+        return 'A ∧ ⊤ ≡ A \nA ∨ ⊥ ≡ A';
+      case 'domination':
+        return 'A ∧ ⊥ ≡ ⊥ \nA ∨ ⊤ ≡ ⊤';
+      case 'implication_contrapositive':
+        return 'A → B ≡ ¬B → ¬A';
+      case 'implication_disjunction':
+        return 'A → B ≡ ¬A ∨ B';
+      default:
+        return '';
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -245,21 +317,38 @@ const ApplyLawsScreen = () => {
                     </HelperText>
                   )}
 
-                  {/* Rule Picker */}
-                  <View style={styles.pickerContainer}>
-                    <Text style={styles.pickerLabel}>Select a Rule:</Text>
-                    {rulesList.slice(1).map((rule) => (
-                      <Button
-                        key={rule.value}
-                        mode={selectedRule === rule.value ? 'contained' : 'outlined'}
-                        onPress={() => setSelectedRule(rule.value)}
-                        style={styles.ruleButton}
-                        contentStyle={styles.ruleButtonContent}
-                        labelStyle={styles.ruleButtonLabel}
+                  {/* Rule Dropdown */}
+                  <View style={styles.dropdownContainer}>
+                    <TouchableOpacity onPress={toggleDropdown} style={styles.dropdownHeader}>
+                      <Text style={styles.dropdownHeaderText}>
+                        {selectedRule ? selectedRuleLabel() : 'Select a Rule'}
+                      </Text>
+                      <Text style={styles.dropdownHeaderIcon}>{dropdownVisible ? '▲' : '▼'}</Text>
+                    </TouchableOpacity>
+                    {dropdownVisible && (
+                      <Animated.View
+                        style={[
+                          styles.dropdownContent,
+                          {
+                            opacity: dropdownAnim,
+                            transform: [
+                              {
+                                scaleY: dropdownAnim.interpolate({
+                                  inputRange: [0, 1],
+                                  outputRange: [0, 1],
+                                }),
+                              },
+                            ],
+                          },
+                        ]}
                       >
-                        {rule.label}
-                      </Button>
-                    ))}
+                        <FlatList
+                          data={rulesList}
+                          renderItem={renderRule}
+                          keyExtractor={(item) => item.value}
+                        />
+                      </Animated.View>
+                    )}
                   </View>
 
                   <Button
@@ -358,22 +447,51 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     fontWeight: 'bold',
   },
-  pickerContainer: {
-    marginBottom: 8,
+  dropdownContainer: {
+    marginBottom: 16,
+    zIndex: 1, // To ensure dropdown appears above other elements
   },
-  pickerLabel: {
+  dropdownHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 12,
+    borderRadius: 4,
+    backgroundColor: '#f9f9f9',
+  },
+  dropdownHeaderText: {
     fontSize: 16,
-    marginBottom: 4,
+    color: '#333',
   },
-  ruleButton: {
-    marginBottom: 8,
+  dropdownHeaderIcon: {
+    fontSize: 16,
+    color: '#333',
   },
-  ruleButtonContent: {
-    height: 40,
-    justifyContent: 'center',
+  dropdownContent: {
+    marginTop: 4,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 4,
+    maxHeight: 200,
+    backgroundColor: '#fff',
   },
-  ruleButtonLabel: {
+  ruleRow: {
+    flexDirection: 'row',
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  ruleName: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
+  },
+  ruleLogic: {
+    flex: 1,
     fontSize: 14,
+    color: '#555',
   },
   button: {
     borderRadius: 8,
