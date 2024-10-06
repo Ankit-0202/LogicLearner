@@ -219,19 +219,29 @@ const ApplyLawsScreen = () => {
             </Animatable.View>
 
             {/* Steps Table */}
-            <Animatable.View animation="fadeIn" duration={1200} style={styles.stepsContainer}>
-              {steps.map((step, index) => (
-                <View key={index} style={styles.stepRow}>
-                  <Text style={styles.stepIndex}>{index + 1}.</Text>
-                  <View style={styles.stepContent}>
-                    <Text style={styles.stepFormula}>{step.formula}</Text>
-                    {index > 0 && (
-                      <Text style={styles.stepRule}>({step.rule})</Text>
-                    )}
-                  </View>
+            {steps.length > 0 && (
+              <Animatable.View animation="fadeIn" duration={1200} style={styles.tableContainer}>
+                {/* Table Header */}
+                <View style={[styles.tableRow, styles.tableHeader]}>
+                  <Text style={[styles.tableCell, styles.tableHeaderText]}>Step</Text>
+                  <Text style={[styles.tableCell, styles.tableHeaderText]}>Formula</Text>
+                  <Text style={[styles.tableCell, styles.tableHeaderText]}>Applied Law</Text>
                 </View>
-              ))}
-            </Animatable.View>
+
+                {/* Table Rows */}
+                <FlatList
+                  data={steps}
+                  renderItem={({ item, index }) => (
+                    <View style={styles.tableRow} key={index}>
+                      <Text style={styles.tableCell}>{index + 1}</Text>
+                      <Text style={styles.tableCell}>{item.formula}</Text>
+                      <Text style={styles.tableCell}>{item.rule}</Text>
+                    </View>
+                  )}
+                  keyExtractor={(item, index) => index.toString()}
+                />
+              </Animatable.View>
+            )}
 
             {/* Input Fields */}
             <Animatable.View animation="fadeInUp" duration={1000} style={styles.inputContainer}>
@@ -378,32 +388,54 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333', // Adjust based on theme
   },
-  stepsContainer: {
+  tableContainer: {
     marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  tableRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  tableHeader: {
+    backgroundColor: '#f2f2f2',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+  tableHeaderText: {
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  tableCell: {
+    flex: 1,
+    padding: 10,
+    borderRightWidth: 1,
+    borderRightColor: '#ccc',
+    textAlign: 'center',
+    fontSize: 16,
+  },
+  tableCellLast: {
+    borderRightWidth: 0,
+  },
+  stepsContainer: {
+    // Removed as tableContainer now handles steps display
   },
   stepRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
+    // Removed as tableContainer now handles steps display
   },
   stepIndex: {
-    fontSize: 16,
-    marginRight: 8,
-    fontWeight: 'bold',
+    // Removed as tableContainer now handles steps display
   },
   stepContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
+    // Removed as tableContainer now handles steps display
   },
   stepFormula: {
-    fontSize: 16,
-    marginRight: 4,
+    // Removed as tableContainer now handles steps display
   },
   stepRule: {
-    fontSize: 14,
-    fontStyle: 'italic',
-    color: '#555',
+    // Removed as tableContainer now handles steps display
   },
   inputContainer: {
     marginBottom: 20,
