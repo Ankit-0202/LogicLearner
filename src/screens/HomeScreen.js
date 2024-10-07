@@ -1,4 +1,4 @@
-// screens/HomeScreen.js
+// src/screens/HomeScreen.js
 
 import React from 'react';
 import { StyleSheet, View, SafeAreaView, ScrollView } from 'react-native';
@@ -30,6 +30,21 @@ const HomeScreen = ({ navigation }) => {
         },
       ],
     },
+    {
+      title: 'Regex Tools',
+      features: [
+        {
+          label: 'String Generator',
+          icon: 'string',
+          navigateTo: 'StringGenerator',
+        },
+        {
+          label: 'String Checker',
+          icon: 'check-all',
+          navigateTo: 'StringChecker',
+        },
+      ],
+    },
     // Placeholder for future categories
     // {
     //   title: 'New Category',
@@ -49,7 +64,7 @@ const HomeScreen = ({ navigation }) => {
         <Animatable.View animation="fadeIn" duration={1000} style={styles.header}>
           <Title style={styles.title}>Logic Learner</Title>
           <Paragraph style={styles.subtitle}>
-            Master logical operations and explore intriguing XKCD comics.
+            Master logical operations, explore intriguing XKCD comics, and leverage powerful Regex tools.
           </Paragraph>
         </Animatable.View>
 
@@ -76,6 +91,8 @@ const HomeScreen = ({ navigation }) => {
                       labelStyle={styles.buttonLabel}
                       uppercase={false}
                       animated
+                      accessibilityLabel={`${feature.label} Button`}
+                      accessibilityHint={`Navigates to the ${feature.label} feature`}
                     >
                       {feature.label}
                     </Button>
@@ -85,29 +102,6 @@ const HomeScreen = ({ navigation }) => {
             </Card>
           </Animatable.View>
         ))}
-
-        {/* Placeholder for future categories */}
-        {/* <Animatable.View animation="fadeInUp" duration={1300} style={styles.categoryCard}>
-          <Card elevation={3}>
-            <Card.Title title="New Category" titleStyle={styles.cardTitle} />
-            <Card.Content>
-              <View style={styles.buttonGrid}>
-                <Button
-                  mode="contained"
-                  onPress={() => navigation.navigate('NewScreen')}
-                  style={styles.gridButton}
-                  icon="new-icon"
-                  contentStyle={styles.buttonContent}
-                  labelStyle={styles.buttonLabel}
-                  uppercase={false}
-                  animated
-                >
-                  New Feature
-                </Button>
-              </View>
-            </Card.Content>
-          </Card>
-        </Animatable.View> */}
       </ScrollView>
 
       {/* Floating Action Button (FAB) for XKCD Comics */}

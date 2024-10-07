@@ -334,7 +334,7 @@ const ApplyLawsScreen = () => {
                 <>
                   <TextInput
                     label="Initial Formula"
-                    placeholder="Enter the initial formula (e.g., A ∧ B)"
+                    placeholder="Enter the initial formula (e.g. A ∧ B)"
                     value={initialFormula}
                     onChangeText={handleInitialFormulaChange}
                     mode="outlined"

@@ -13,7 +13,11 @@ import InstructionsScreen from './src/screens/InstructionsScreen';
 import EquivalenceRulesScreen from './src/screens/EquivalenceRulesScreen';
 import EquivalenceScreen from './src/screens/EquivalenceScreen';
 import ApplyLawsScreen from './src/screens/ApplyLawsScreen';
-import XKCDScreen from './src/screens/XKCDScreen'; // Import the new screen
+import XKCDScreen from './src/screens/XKCDScreen'; // Existing screen
+
+// Import new screens
+import StringGeneratorScreen from './src/screens/StringGeneratorScreen';
+import StringCheckerScreen from './src/screens/StringCheckerScreen';
 
 const Stack = createStackNavigator();
 
@@ -70,7 +74,18 @@ const AppContent = () => {
         <Stack.Screen 
           name="XKCD" 
           component={XKCDScreen} 
-          options={{ title: 'XKCD Comics' }} // Add the new screen to the stack
+          options={{ title: 'XKCD Comics' }} 
+        />
+        {/* New Screens */}
+        <Stack.Screen 
+          name="StringGenerator" 
+          component={StringGeneratorScreen} 
+          options={{ title: 'String Generator' }} 
+        />
+        <Stack.Screen 
+          name="StringChecker" 
+          component={StringCheckerScreen} 
+          options={{ title: 'String Checker' }} 
         />
       </Stack.Navigator>
     </NavigationContainer>
