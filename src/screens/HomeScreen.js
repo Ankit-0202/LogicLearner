@@ -1,64 +1,118 @@
 // screens/HomeScreen.js
 
 import React from 'react';
-import { StyleSheet, View, SafeAreaView } from 'react-native';
-import { Button, Title, FAB, useTheme } from 'react-native-paper';
+import { StyleSheet, View, SafeAreaView, ScrollView } from 'react-native';
+import { Button, Title, FAB, Card, Paragraph, useTheme } from 'react-native-paper';
 import * as Animatable from 'react-native-animatable';
 
 const HomeScreen = ({ navigation }) => {
   const { colors } = useTheme();
 
+  // Define the categories and their respective features
+  const categories = [
+    {
+      title: 'Logical Operations',
+      features: [
+        {
+          label: 'Generate Truth Table',
+          icon: 'table',
+          navigateTo: 'TruthTable',
+        },
+        {
+          label: 'Check Equivalence',
+          icon: 'check-circle',
+          navigateTo: 'Equivalence',
+        },
+        {
+          label: 'Equivalence Assistant',
+          icon: 'format-list-bulleted',
+          navigateTo: 'ApplyLaws',
+        },
+      ],
+    },
+    // Placeholder for future categories
+    // {
+    //   title: 'New Category',
+    //   features: [
+    //     {
+    //       label: 'New Feature',
+    //       icon: 'new-icon',
+    //       navigateTo: 'NewScreen',
+    //     },
+    //   ],
+    // },
+  ];
+
   return (
     <SafeAreaView style={styles.container}>
-      <Animatable.View animation="fadeIn" duration={1000} style={styles.content}>
-        <Title style={styles.title}>Logic Learner</Title>
-        
-        <View style={styles.buttonContainer}>
-          <Button
-            mode="contained"
-            onPress={() => navigation.navigate('TruthTable')}
-            style={styles.button}
-            icon="table"
-            contentStyle={styles.buttonContent}
-            labelStyle={styles.buttonLabel}
-            animated
-            uppercase={false}
-          >
-            Generate Truth Table
-          </Button>
-          
-          <Button
-            mode="contained"
-            onPress={() => navigation.navigate('Equivalence')}
-            style={styles.button}
-            icon="check-circle"
-            contentStyle={styles.buttonContent}
-            labelStyle={styles.buttonLabel}
-            animated
-            uppercase={false}
-          >
-            Check Equivalence
-          </Button>
-          
-          <Button
-            mode="contained"
-            onPress={() => navigation.navigate('ApplyLaws')}
-            style={styles.button}
-            icon="format-list-bulleted"
-            contentStyle={styles.buttonContent}
-            labelStyle={styles.buttonLabel}
-            animated
-            uppercase={false}
-          >
-            Equivalence Assistant
-          </Button>
-        </View>
-      </Animatable.View>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <Animatable.View animation="fadeIn" duration={1000} style={styles.header}>
+          <Title style={styles.title}>Logic Learner</Title>
+          <Paragraph style={styles.subtitle}>
+            Master logical operations and explore intriguing XKCD comics.
+          </Paragraph>
+        </Animatable.View>
 
-      {/* Floating Action Button (FAB) for XKCD */}
+        {/* Render each category */}
+        {categories.map((category, index) => (
+          <Animatable.View
+            key={index}
+            animation="fadeInUp"
+            duration={1000 + index * 300} // Stagger animations
+            style={styles.categoryCard}
+          >
+            <Card elevation={3}>
+              <Card.Title title={category.title} titleStyle={styles.cardTitle} />
+              <Card.Content>
+                <View style={styles.buttonGrid}>
+                  {category.features.map((feature, idx) => (
+                    <Button
+                      key={idx}
+                      mode="contained"
+                      onPress={() => navigation.navigate(feature.navigateTo)}
+                      style={styles.gridButton}
+                      icon={feature.icon}
+                      contentStyle={styles.buttonContent}
+                      labelStyle={styles.buttonLabel}
+                      uppercase={false}
+                      animated
+                    >
+                      {feature.label}
+                    </Button>
+                  ))}
+                </View>
+              </Card.Content>
+            </Card>
+          </Animatable.View>
+        ))}
+
+        {/* Placeholder for future categories */}
+        {/* <Animatable.View animation="fadeInUp" duration={1300} style={styles.categoryCard}>
+          <Card elevation={3}>
+            <Card.Title title="New Category" titleStyle={styles.cardTitle} />
+            <Card.Content>
+              <View style={styles.buttonGrid}>
+                <Button
+                  mode="contained"
+                  onPress={() => navigation.navigate('NewScreen')}
+                  style={styles.gridButton}
+                  icon="new-icon"
+                  contentStyle={styles.buttonContent}
+                  labelStyle={styles.buttonLabel}
+                  uppercase={false}
+                  animated
+                >
+                  New Feature
+                </Button>
+              </View>
+            </Card.Content>
+          </Card>
+        </Animatable.View> */}
+      </ScrollView>
+
+      {/* Floating Action Button (FAB) for XKCD Comics */}
       <FAB
         style={styles.fab}
-        small={false}
         icon="cards" // Choose an appropriate icon from MaterialCommunityIcons
         label="XKCD Comics"
         onPress={() => navigation.navigate('XKCD')}
@@ -72,41 +126,57 @@ const HomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff', // Adjust based on theme if necessary
+    backgroundColor: '#fff',
   },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  scrollContainer: {
     padding: 20,
+    paddingBottom: 100, // Ensure space for FAB
+  },
+  header: {
+    marginBottom: 30,
+    alignItems: 'center',
   },
   title: {
     fontSize: 32,
-    marginBottom: 40,
-    color: '#333', // Adjust based on theme
+    color: '#333',
     textAlign: 'center',
   },
-  buttonContainer: {
-    width: '100%',
-    alignItems: 'center',
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 10,
   },
-  button: {
-    width: '80%',
-    marginVertical: 10,
+  categoryCard: {
+    marginBottom: 20,
+  },
+  cardTitle: {
+    fontSize: 20,
+    color: '#6200ee', // Primary color
+  },
+  buttonGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  gridButton: {
+    width: '48%',
+    marginVertical: 8,
     borderRadius: 8,
   },
   buttonContent: {
     height: 50,
+    justifyContent: 'center',
   },
   buttonLabel: {
-    fontSize: 18,
+    fontSize: 16,
   },
   fab: {
     position: 'absolute',
     margin: 16,
     right: 0,
     bottom: 0,
-    backgroundColor: '#6200ee', // Adjust based on your theme
+    backgroundColor: '#6200ee',
   },
 });
 
