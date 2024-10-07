@@ -15,17 +15,17 @@ const HomeScreen = ({ navigation }) => {
       features: [
         {
           label: 'Generate Truth Table',
-          icon: 'table',
+          icon: 'table', // Valid in MaterialCommunityIcons
           navigateTo: 'TruthTable',
         },
         {
           label: 'Check Equivalence',
-          icon: 'check-circle',
+          icon: 'check-circle', // Valid in MaterialCommunityIcons
           navigateTo: 'Equivalence',
         },
         {
           label: 'Equivalence Assistant',
-          icon: 'format-list-bulleted',
+          icon: 'format-list-bulleted', // Valid in MaterialCommunityIcons
           navigateTo: 'ApplyLaws',
         },
       ],
@@ -35,12 +35,12 @@ const HomeScreen = ({ navigation }) => {
       features: [
         {
           label: 'String Generator',
-          icon: 'string',
+          icon: 'format-text', // Replaced 'string' with 'format-text'
           navigateTo: 'StringGenerator',
         },
         {
           label: 'String Checker',
-          icon: 'check-all',
+          icon: 'check-circle', // Replaced 'check-all' with 'check-circle'
           navigateTo: 'StringChecker',
         },
       ],
@@ -107,7 +107,7 @@ const HomeScreen = ({ navigation }) => {
       {/* Floating Action Button (FAB) for XKCD Comics */}
       <FAB
         style={styles.fab}
-        icon="cards" // Choose an appropriate icon from MaterialCommunityIcons
+        icon="cards" // Ensure 'cards' exists in MaterialCommunityIcons
         label="XKCD Comics"
         onPress={() => navigation.navigate('XKCD')}
         accessibilityLabel="Navigate to XKCD Comics"
